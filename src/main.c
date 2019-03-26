@@ -1,4 +1,3 @@
-#include "gst_backend.h"
 #include "ui.h"
 
 #include <gtk/gtk.h>
