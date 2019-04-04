@@ -1,5 +1,5 @@
 #include <gtk/gtk.h>
-#include "ui.h"
+#include "gst-backend.h"
 
 typedef struct _OpenMenu {
     GtkWidget* openMenu;
@@ -69,7 +69,16 @@ int createOptionsMenu   (OptionsMenu* optionsMenu,     GtkWidget* menubar);
 int createHelpMenu      (HelpMenu* helpMenu,           GtkWidget* menubar);
 int createUi            (GtkWidget* window);
 int createMenubar       (Menubar* menubar);
+int createWindow(const char* name, int width, int height);
 
+int main(int argc, char **argv) {
+    gtk_init(&argc, &argv);
+    backendInit(&argc, &argv);
+
+    createWindow("ProjectGliese", 800, 600);
+    gtk_main();
+    return 0;
+}
 int createWindow(const char* name, int width, int height) {
     GtkWidget* window;
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -77,9 +86,9 @@ int createWindow(const char* name, int width, int height) {
     gtk_window_set_default_size(GTK_WINDOW(window), width, height);
     gtk_window_set_title(GTK_WINDOW(window), name);
     createUi(window);
-    g_signal_connect(G_OBJECT(window), "destroy",
+    g_signal_connect(window, "destroy",
             G_CALLBACK(gtk_main_quit), NULL);
-    g_signal_connect(G_OBJECT(window), "destroy",
+    g_signal_connect(window, "destroy",
             G_CALLBACK(gtk_main_quit), NULL);
     gtk_widget_show_all(window);
     return 0;
