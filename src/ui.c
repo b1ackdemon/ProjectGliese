@@ -1,4 +1,14 @@
 #include <gtk/gtk.h>
+
+#include <gdk/gdk.h>
+#if defined (GDK_WINDOWING_X11)
+#include <gdk/gdkx.h>
+#elif defined (GDK_WINDOWING_WIN32)
+#include <gdk/gdkwin32.h>
+#elif defined (GDK_WINDOWING_QUARTZ)
+#include <gdk/gdkquartz.h>
+#endif
+
 #include "gst-backend.h"
 
 typedef struct _OpenMenu {
@@ -71,12 +81,20 @@ int createUi            (GtkWidget* window);
 int createMenubar       (Menubar* menubar);
 int createWindow(const char* name, int width, int height);
 
+static void realize_cb (GtkWidget *widget, gpointer data);
+static void play_cb (GtkButton *button, gpointer data);
+static void pause_cb (GtkButton *button, gpointer data);
+static void stop_cb (GtkButton *button, gpointer data);
+static void slider_cb (GtkRange *range, gpointer data);
+
 int main(int argc, char **argv) {
     gtk_init(&argc, &argv);
     backendInit(&argc, &argv);
 
+    backendPlay("kk");
     createWindow("ProjectGliese", 800, 600);
     gtk_main();
+    backendDeInit();
     return 0;
 }
 int createWindow(const char* name, int width, int height) {
@@ -106,13 +124,27 @@ int createUi(GtkWidget* window) {
     GtkWidget* volumeButton;
     GtkWidget* fullscreenButton;
     Menubar menubar;
-    videoWindow = gtk_drawing_area_new();
-    playButton  = gtk_button_new_with_label("▶");
-    pauseButton = gtk_button_new_with_label("▮▮");
-    stopButton  = gtk_button_new_with_label("■");
+
+    videoWindow  = gtk_drawing_area_new();
+    g_signal_connect (videoWindow, "realize", G_CALLBACK (realize_cb), NULL);
+
+    playButton   = gtk_button_new_from_icon_name("media-playback-start", GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT (playButton), "clicked", G_CALLBACK (play_cb), NULL);
+
+    pauseButton  = gtk_button_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT (pauseButton), "clicked", G_CALLBACK (pause_cb), NULL);
+
+    stopButton   = gtk_button_new_from_icon_name("media-playback-stop", GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT (stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
+
     volumeButton = gtk_volume_button_new();
-    fullscreenButton = gtk_button_new_with_label("◱");
+
+    fullscreenButton = gtk_button_new_from_icon_name("view-fullscreen", GTK_ICON_SIZE_BUTTON);
+
     slider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
+    gtk_scale_set_draw_value(GTK_SCALE(slider), 0);
+    g_signal_connect (G_OBJECT (slider), "value-changed", G_CALLBACK (slider_cb), NULL);
+
     createMenubar(&menubar);
 
     controls = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
@@ -123,12 +155,12 @@ int createUi(GtkWidget* window) {
     gtk_box_pack_start (GTK_BOX(controls), fullscreenButton, FALSE, FALSE, 2);
 
     bottomPanel = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_box_pack_start(GTK_BOX(bottomPanel), slider, FALSE, FALSE, 2);
+    gtk_box_pack_start(GTK_BOX(bottomPanel), slider, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(bottomPanel), controls, FALSE, FALSE, 2);
 
     mainBox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_pack_start(GTK_BOX(mainBox), menubar.menubar, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(mainBox), videoWindow, FALSE, FALSE, 2);
+    gtk_box_pack_start(GTK_BOX(mainBox), videoWindow, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(mainBox), bottomPanel, FALSE, FALSE, 2);
     gtk_container_add (GTK_CONTAINER (window), mainBox);
     return 0;
@@ -275,4 +307,38 @@ int createHelpMenu (HelpMenu* helpMenu, GtkWidget* menubar) {
             helpMenu->aboutMi);
     gtk_menu_shell_append(GTK_MENU_SHELL(menubar), helpMenu->helpMi);
     return 0;
+}
+
+static void realize_cb (GtkWidget *widget, gpointer data) {
+    GdkWindow *window = gtk_widget_get_window (widget);
+    guintptr window_handle;
+
+    if (!gdk_window_ensure_native (window))
+        g_error ("Couldn't create native window needed for GstVideoOverlay!");
+
+#if defined (GDK_WINDOWING_WIN32)
+    window_handle = (guintptr)GDK_WINDOW_HWND (window);
+#elif defined (GDK_WINDOWING_QUARTZ)
+    window_handle = gdk_quartz_window_get_nsview (window);
+#elif defined (GDK_WINDOWING_X11)
+    window_handle = GDK_WINDOW_XID (window);
+#endif
+    backendSetWindow(window_handle);
+}
+
+static void play_cb (GtkButton *button, gpointer data) {
+    backendResume();
+}
+
+static void pause_cb (GtkButton *button, gpointer data) {
+    backendPause();
+}
+
+static void stop_cb (GtkButton *button, gpointer data) {
+    backendStop();
+}
+
+static void slider_cb (GtkRange *range, gpointer data) {
+    gdouble value = gtk_range_get_value(GTK_RANGE(range));
+    backendSeek(value);
 }

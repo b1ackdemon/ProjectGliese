@@ -3,10 +3,11 @@
 
 void backendInit(int *argc, char ***argv);
 void backendDeInit();
-int  backendSetWindow(gpointer wnd);
+int backendSetWindow(guintptr window);
 int  backendPlay(const gchar *filename);
+void backendPause();
 void backendStop();
 void backendResume();
-void backendReset();
+void backendSeek(gdouble value);
 
 #endif //PROJECTGLIESE_GST_BACKEND_H

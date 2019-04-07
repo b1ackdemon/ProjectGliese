@@ -18,20 +18,17 @@ typedef struct _CustomData {
 } CustomData;
 
 static GstElement* pipeline;
-static gpointer    window;
-static const GstSeekFlags seekFlags = GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT;
 
 static void eos_cb (GstBus *bus, GstMessage *msg, CustomData *data);
 static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data);
 static void state_changed_cb (GstBus *bus, GstMessage *msg, CustomData *data);
-static void application_cb (GstBus *bus, GstMessage *msg, CustomData *data);
 
 void backendInit(int *argc, char ***argv){
     gst_init (argc, argv);
 }
 
-int backendSetWindow(gpointer wnd) {
-    window = wnd;
+int backendSetWindow(guintptr window) {
+    gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(pipeline), window);
     return 0;
 }
 
@@ -39,6 +36,7 @@ int backendPlay(const gchar *filename) {
     CustomData data;
     GstBus* bus;
 
+    data.duration = GST_CLOCK_TIME_NONE;
     pipeline = gst_element_factory_make("playbin", "playbin");
     if (!pipeline) {
         g_printerr ("Not all elements could be created.\n");
@@ -51,7 +49,6 @@ int backendPlay(const gchar *filename) {
     g_signal_connect (G_OBJECT (bus), "message::error", (GCallback)error_cb, &data);
     g_signal_connect (G_OBJECT (bus), "message::eos", (GCallback)eos_cb, &data);
     g_signal_connect (G_OBJECT (bus), "message::state-changed", (GCallback)state_changed_cb, &data);
-    g_signal_connect (G_OBJECT (bus), "message::application", (GCallback)application_cb, &data);
     gst_object_unref (bus);
 
     data.ret = gst_element_set_state (pipeline, GST_STATE_PLAYING);
@@ -77,9 +74,9 @@ void backendPause() {
     gst_element_set_state(pipeline, GST_STATE_PAUSED);
 }
 
-void backendReset() {
-    gst_element_seek(pipeline, 1.0, GST_FORMAT_TIME, seekFlags,
-            GST_SEEK_TYPE_SET, 0, GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE);
+void backendSeek(gdouble value) {
+    gst_element_seek_simple(pipeline, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT,
+                            (gint64)(value * GST_SECOND));
 }
 
 void backendDeInit() {
@@ -92,6 +89,7 @@ static void eos_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
     gst_element_set_state (pipeline, GST_STATE_READY);
 }
 
+/* This function is called when an error message is posted on the bus */
 static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
     GError *err;
     gchar *debug_info;
@@ -117,13 +115,5 @@ static void state_changed_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
             /* For extra responsiveness, we refresh the GUI as soon as we reach the PAUSED state */
             //TODO refresh_ui (data);
         }
-    }
-}
-
-static void application_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
-    if (g_strcmp0 (gst_structure_get_name (gst_message_get_structure (msg)), "tags-changed") == 0) {
-        /* If the message is the "tags-changed" (only one we are currently issuing), update
-         * the stream info GUI */
-        //TODO analyze_streams (data);
     }
 }
