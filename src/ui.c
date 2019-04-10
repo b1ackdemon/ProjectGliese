@@ -10,6 +10,7 @@
 #endif
 
 #include "gst-backend.h"
+#include "ui.h"
 
 typedef struct _OpenMenu {
     GtkWidget* openMenu;
@@ -69,6 +70,8 @@ typedef struct _Menubar {
     HelpMenu      helpMenu;
 } Menubar;
 
+static GtkWidget* slider;
+static gulong sliderUpdateSignalId;
 
 int createOpenMenu      (OpenMenu* openMenu,           GtkWidget* menubar);
 int createVideoMenu     (VideoMenu* videoMenu,         GtkWidget* menubar);
@@ -86,14 +89,20 @@ static void play_cb (GtkButton *button, gpointer data);
 static void pause_cb (GtkButton *button, gpointer data);
 static void stop_cb (GtkButton *button, gpointer data);
 static void slider_cb (GtkRange *range, gpointer data);
+static void delete_event_cb (GtkWidget *widget, GdkEvent *event, gpointer data);
 
 int main(int argc, char **argv) {
     gtk_init(&argc, &argv);
     backendInit(&argc, &argv);
 
     backendPlay("kk");
-    createWindow("ProjectGliese", 800, 600);
+
+    createWindow("ProjectGliese", 800, 510);
+
+    g_timeout_add_seconds(1, (GSourceFunc) refreshUi, NULL);
+    /* Start the GTK mail loop. */
     gtk_main();
+
     backendDeInit();
     return 0;
 }
@@ -103,11 +112,8 @@ int createWindow(const char* name, int width, int height) {
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
     gtk_window_set_default_size(GTK_WINDOW(window), width, height);
     gtk_window_set_title(GTK_WINDOW(window), name);
+    g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (delete_event_cb), NULL);
     createUi(window);
-    g_signal_connect(window, "destroy",
-            G_CALLBACK(gtk_main_quit), NULL);
-    g_signal_connect(window, "destroy",
-            G_CALLBACK(gtk_main_quit), NULL);
     gtk_widget_show_all(window);
     return 0;
 }
@@ -117,7 +123,6 @@ int createUi(GtkWidget* window) {
     GtkWidget* mainBox;
     GtkWidget* bottomPanel;
     GtkWidget* videoWindow;
-    GtkWidget* slider;
     GtkWidget* playButton;
     GtkWidget* pauseButton;
     GtkWidget* stopButton;
@@ -143,7 +148,7 @@ int createUi(GtkWidget* window) {
 
     slider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
     gtk_scale_set_draw_value(GTK_SCALE(slider), 0);
-    g_signal_connect (G_OBJECT (slider), "value-changed", G_CALLBACK (slider_cb), NULL);
+    sliderUpdateSignalId = g_signal_connect (G_OBJECT (slider), "value-changed", G_CALLBACK (slider_cb), NULL);
 
     createMenubar(&menubar);
 
@@ -155,6 +160,7 @@ int createUi(GtkWidget* window) {
     gtk_box_pack_start (GTK_BOX(controls), fullscreenButton, FALSE, FALSE, 2);
 
     bottomPanel = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(bottomPanel), 5);
     gtk_box_pack_start(GTK_BOX(bottomPanel), slider, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(bottomPanel), controls, FALSE, FALSE, 2);
 
@@ -164,6 +170,31 @@ int createUi(GtkWidget* window) {
     gtk_box_pack_start(GTK_BOX(mainBox), bottomPanel, FALSE, FALSE, 2);
     gtk_container_add (GTK_CONTAINER (window), mainBox);
     return 0;
+}
+
+gboolean refreshUi() {
+    gdouble current  = -1;
+    gdouble duration = 0;
+
+    if (!backendIsPausedOrPlaying()) {
+        return TRUE;
+    }
+
+    if (!backendDurationIsValid()) {
+        duration = backendQueryDuration();
+        gtk_range_set_range(GTK_RANGE(slider), 0, duration);
+    }
+
+    if (backendQueryPosition(&current)) {
+        /* Block the "value-changed" signal, so the slider_cb function is not called
+         * (which would trigger a seek the user has not requested) */
+        g_signal_handler_block (slider, sliderUpdateSignalId);
+        /* Set the position of the slider to the current pipeline position, in SECONDS */
+        gtk_range_set_value (GTK_RANGE (slider), current);
+        /* Re-enable the signal */
+        g_signal_handler_unblock (slider, sliderUpdateSignalId);
+    }
+    return TRUE;
 }
 
 int createMenubar(Menubar* menubar) {
@@ -341,4 +372,10 @@ static void stop_cb (GtkButton *button, gpointer data) {
 static void slider_cb (GtkRange *range, gpointer data) {
     gdouble value = gtk_range_get_value(GTK_RANGE(range));
     backendSeek(value);
+}
+
+/* This function is called when the main window is closed */
+static void delete_event_cb (GtkWidget *widget, GdkEvent *event, gpointer data) {
+    stop_cb (NULL, NULL);
+    gtk_main_quit ();
 }

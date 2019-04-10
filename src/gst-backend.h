@@ -1,5 +1,4 @@
-#ifndef PROJECTGLIESE_GST_BACKEND_H
-#define PROJECTGLIESE_GST_BACKEND_H
+#pragma once
 
 void backendInit(int *argc, char ***argv);
 void backendDeInit();
@@ -9,5 +8,7 @@ void backendPause();
 void backendStop();
 void backendResume();
 void backendSeek(gdouble value);
-
-#endif //PROJECTGLIESE_GST_BACKEND_H
+gdouble backendQueryDuration();
+gboolean backendQueryPosition(gdouble* current);
+gboolean backendDurationIsValid();
+gboolean backendIsPausedOrPlaying();
