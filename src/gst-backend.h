@@ -8,6 +8,7 @@ void backendPause();
 void backendStop();
 void backendResume();
 void backendSeek(gdouble value);
+void backendSetVolume(gdouble volume);
 gdouble backendQueryDuration();
 gboolean backendQueryPosition(gdouble* current);
 gboolean backendDurationIsValid();

@@ -43,7 +43,7 @@ int backendPlay(const gchar *filename) {
         g_printerr ("Not all elements could be created.\n");
         return -1;
     }
-    g_object_set (pipeline, "uri", "file:///home/blackdemon/Videos/1.mkv", NULL);
+    g_object_set (pipeline, "uri", "file:///home/blackdemon/Videos/3.mp4", NULL);
 
     bus = gst_element_get_bus (pipeline);
     gst_bus_add_signal_watch (bus);
@@ -108,6 +108,10 @@ void backendPause() {
 void backendSeek(gdouble value) {
     gst_element_seek_simple(pipeline, GST_FORMAT_TIME,
             GST_SEEK_FLAG_FLUSH, (gint64)(value * GST_SECOND));
+}
+
+void backendSetVolume(gdouble volume) {
+    g_object_set(pipeline, "volume", volume, NULL);
 }
 
 void backendDeInit() {

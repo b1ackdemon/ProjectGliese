@@ -89,6 +89,7 @@ static void play_cb (GtkButton *button, gpointer data);
 static void pause_cb (GtkButton *button, gpointer data);
 static void stop_cb (GtkButton *button, gpointer data);
 static void slider_cb (GtkRange *range, gpointer data);
+static void volume_cb (GtkRange* volumeButton, gpointer data);
 static void delete_event_cb (GtkWidget *widget, GdkEvent *event, gpointer data);
 
 int main(int argc, char **argv) {
@@ -97,9 +98,10 @@ int main(int argc, char **argv) {
 
     backendPlay("kk");
 
-    createWindow("ProjectGliese", 800, 510);
+    createWindow("ProjectGliese", 800, 520);
 
     g_timeout_add_seconds(1, (GSourceFunc) refreshUi, NULL);
+
     /* Start the GTK mail loop. */
     gtk_main();
 
@@ -143,6 +145,9 @@ int createUi(GtkWidget* window) {
     g_signal_connect (G_OBJECT (stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
 
     volumeButton = gtk_volume_button_new();
+    gtk_scale_button_set_value(GTK_SCALE_BUTTON(volumeButton), 1.0);
+    g_signal_connect (G_OBJECT(volumeButton), "value-changed", G_CALLBACK(volume_cb), NULL);
+
 
     fullscreenButton = gtk_button_new_from_icon_name("view-fullscreen", GTK_ICON_SIZE_BUTTON);
 
@@ -372,6 +377,12 @@ static void stop_cb (GtkButton *button, gpointer data) {
 static void slider_cb (GtkRange *range, gpointer data) {
     gdouble value = gtk_range_get_value(GTK_RANGE(range));
     backendSeek(value);
+}
+
+static void volume_cb (GtkRange* volumeButton, gpointer data) {
+    gdouble value = gtk_scale_button_get_value(GTK_SCALE_BUTTON(volumeButton));
+    //g_print("volume %f\n", value);
+    backendSetVolume(value);
 }
 
 /* This function is called when the main window is closed */
