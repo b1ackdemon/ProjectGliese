@@ -43,7 +43,7 @@ int backendPlay(const gchar *filename) {
         g_printerr ("Not all elements could be created.\n");
         return -1;
     }
-    g_object_set (pipeline, "uri", "file:///home/blackdemon/Videos/3.mp4", NULL);
+    g_object_set (pipeline, "uri", filename, NULL);
 
     bus = gst_element_get_bus (pipeline);
     gst_bus_add_signal_watch (bus);

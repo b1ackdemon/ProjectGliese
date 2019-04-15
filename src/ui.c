@@ -80,9 +80,10 @@ typedef struct _UiWidgets {
 } UiWidgets;
 
 static GtkWidget* slider;
+static UiWidgets uiWidgets;
 static gulong sliderUpdateSignalId;
 
-int createOpenMenu      (OpenMenu* openMenu,           GtkWidget* menubar);
+int createOpenMenu      (OpenMenu* openMenu, GtkWidget* menubar, UiWidgets *uiWidgets);
 int createVideoMenu     (VideoMenu* videoMenu,         GtkWidget* menubar);
 int createAudioMenu     (AudioMenu* audioMenu,         GtkWidget* menubar);
 int createSubtitlesMenu (SubtitlesMenu* subtitlesMenu, GtkWidget* menubar);
@@ -90,7 +91,7 @@ int createViewMenu      (ViewMenu* viewMenu,           GtkWidget* menubar);
 int createOptionsMenu   (OptionsMenu* optionsMenu,     GtkWidget* menubar);
 int createHelpMenu      (HelpMenu* helpMenu,           GtkWidget* menubar);
 int createUi            (GtkWidget* window);
-int createMenubar       (Menubar* menubar);
+int createMenubar       (Menubar* menubar, UiWidgets *uiWidgets);
 int createWindow(const char* name, int width, int height);
 static void createContext (GtkWidget *widget);
 
@@ -100,13 +101,12 @@ static void stop_cb (GtkButton *button, gpointer data);
 static void slider_cb (GtkRange *range, gpointer data);
 static void volume_cb (GtkRange* volumeButton, gpointer data);
 static void deleteEvent_cb(GtkWidget *widget, GdkEvent *event, gpointer data);
-static void fileMenu_cb (GtkWidget *widget, gpointer data);
+static void fileMenu_cb (GtkWidget *widget, UiWidgets *uiWidgets);
 
 int main(int argc, char **argv) {
     gtk_init(&argc, &argv);
     backendInit(&argc, &argv);
 
-    backendPlay("kk");
 
     createWindow("ProjectGliese", 800, 520);
 
@@ -134,32 +134,25 @@ int createUi(GtkWidget* window) {
     GtkWidget* controls;
     GtkWidget* mainBox;
     GtkWidget* bottomPanel;
-    UiWidgets uiWidgets;
+
     Menubar menubar;
 
     uiWidgets.videoWindow  = gtk_drawing_area_new();
-
     uiWidgets.playButton   = gtk_button_new_from_icon_name("media-playback-start", GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT (uiWidgets.playButton), "clicked", G_CALLBACK (play_cb), NULL);
-
     uiWidgets.pauseButton  = gtk_button_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT (uiWidgets.pauseButton), "clicked", G_CALLBACK (pause_cb), NULL);
-
     uiWidgets.stopButton   = gtk_button_new_from_icon_name("media-playback-stop", GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT (uiWidgets.stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
-
     uiWidgets.volumeButton = gtk_volume_button_new();
     gtk_scale_button_set_value(GTK_SCALE_BUTTON(uiWidgets.volumeButton), 1.0);
-    g_signal_connect (G_OBJECT(uiWidgets.volumeButton), "value-changed", G_CALLBACK(volume_cb), NULL);
+
 
 
     uiWidgets.fullscreenButton = gtk_button_new_from_icon_name("view-fullscreen", GTK_ICON_SIZE_BUTTON);
 
     slider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
     gtk_scale_set_draw_value(GTK_SCALE(slider), 0);
-    sliderUpdateSignalId = g_signal_connect (G_OBJECT (slider), "value-changed", G_CALLBACK (slider_cb), NULL);
 
-    createMenubar(&menubar);
+
+    createMenubar(&menubar, &uiWidgets);
 
     controls = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start (GTK_BOX (controls), uiWidgets.playButton, FALSE, FALSE, 2);
@@ -206,9 +199,9 @@ gboolean refreshUi() {
     return TRUE;
 }
 
-int createMenubar(Menubar* menubar) {
+int createMenubar(Menubar* menubar, UiWidgets *uiWidgets) {
     menubar->menubar = gtk_menu_bar_new();
-    createOpenMenu(&menubar->openMenu, menubar->menubar);
+    createOpenMenu(&menubar->openMenu, menubar->menubar, uiWidgets);
     createVideoMenu(&menubar->videoMenu, menubar->menubar);
     createAudioMenu(&menubar->audioMenu, menubar->menubar);
     createSubtitlesMenu(&menubar->subtitlesMenu, menubar->menubar);
@@ -218,14 +211,14 @@ int createMenubar(Menubar* menubar) {
     return 0;
 }
 
-int createOpenMenu (OpenMenu* openMenu, GtkWidget* menubar) {
+int createOpenMenu (OpenMenu* openMenu, GtkWidget* menubar, UiWidgets *uiWidgets) {
     openMenu->openMenu = gtk_menu_new();
 
     openMenu->OpenMi   =
             gtk_menu_item_new_with_label("Open");
     openMenu->fileMi   =
             gtk_menu_item_new_with_label("File");
-    g_signal_connect (openMenu->fileMi, "activate", G_CALLBACK (fileMenu_cb), NULL);
+    g_signal_connect (openMenu->fileMi, "activate", G_CALLBACK (fileMenu_cb), uiWidgets);
     openMenu->closeMi  =
             gtk_menu_item_new_with_label("Close");
     openMenu->exitMi   =
@@ -389,7 +382,7 @@ static void volume_cb (GtkRange* volumeButton, gpointer data) {
     backendSetVolume(value);
 }
 
-void fileMenu_cb(GtkWidget *widget, gpointer data) {
+void fileMenu_cb (GtkWidget *widget, UiWidgets *uiWidgets1) {
     GtkFileChooserNative *fileChooser;
     GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
     GtkWindow *window = GTK_WINDOW(gtk_widget_get_toplevel(widget));
@@ -405,7 +398,15 @@ void fileMenu_cb(GtkWidget *widget, gpointer data) {
         filename = gtk_file_chooser_get_filename(chooser);
         const char *path = g_strconcat("file://", filename, NULL);
 
+        backendPlay(path);
+        createContext(uiWidgets.videoWindow);
 
+        g_signal_connect (G_OBJECT (uiWidgets.playButton), "clicked", G_CALLBACK (play_cb), NULL);
+        g_signal_connect (G_OBJECT (uiWidgets.pauseButton), "clicked", G_CALLBACK (pause_cb), NULL);
+        g_signal_connect (G_OBJECT (uiWidgets.stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
+        g_signal_connect (G_OBJECT(uiWidgets.volumeButton), "value-changed", G_CALLBACK(volume_cb), NULL);
+        sliderUpdateSignalId = g_signal_connect (G_OBJECT (slider), "value-changed", G_CALLBACK (slider_cb), NULL);
+        gtk_scale_button_set_value(GTK_SCALE_BUTTON(uiWidgets.volumeButton), 1.0);
 
         g_free(filename);
     }
