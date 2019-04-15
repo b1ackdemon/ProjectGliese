@@ -70,6 +70,15 @@ typedef struct _Menubar {
     HelpMenu      helpMenu;
 } Menubar;
 
+typedef struct _UiWidgets {
+    GtkWidget* videoWindow;
+    GtkWidget* playButton;
+    GtkWidget* pauseButton;
+    GtkWidget* stopButton;
+    GtkWidget* volumeButton;
+    GtkWidget* fullscreenButton;
+} UiWidgets;
+
 static GtkWidget* slider;
 static gulong sliderUpdateSignalId;
 
@@ -83,14 +92,15 @@ int createHelpMenu      (HelpMenu* helpMenu,           GtkWidget* menubar);
 int createUi            (GtkWidget* window);
 int createMenubar       (Menubar* menubar);
 int createWindow(const char* name, int width, int height);
+static void createContext (GtkWidget *widget);
 
-static void realize_cb (GtkWidget *widget, gpointer data);
 static void play_cb (GtkButton *button, gpointer data);
 static void pause_cb (GtkButton *button, gpointer data);
 static void stop_cb (GtkButton *button, gpointer data);
 static void slider_cb (GtkRange *range, gpointer data);
 static void volume_cb (GtkRange* volumeButton, gpointer data);
-static void delete_event_cb (GtkWidget *widget, GdkEvent *event, gpointer data);
+static void deleteEvent_cb(GtkWidget *widget, GdkEvent *event, gpointer data);
+static void fileMenu_cb (GtkWidget *widget, gpointer data);
 
 int main(int argc, char **argv) {
     gtk_init(&argc, &argv);
@@ -114,7 +124,7 @@ int createWindow(const char* name, int width, int height) {
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
     gtk_window_set_default_size(GTK_WINDOW(window), width, height);
     gtk_window_set_title(GTK_WINDOW(window), name);
-    g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK (delete_event_cb), NULL);
+    g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK(deleteEvent_cb), NULL);
     createUi(window);
     gtk_widget_show_all(window);
     return 0;
@@ -124,32 +134,26 @@ int createUi(GtkWidget* window) {
     GtkWidget* controls;
     GtkWidget* mainBox;
     GtkWidget* bottomPanel;
-    GtkWidget* videoWindow;
-    GtkWidget* playButton;
-    GtkWidget* pauseButton;
-    GtkWidget* stopButton;
-    GtkWidget* volumeButton;
-    GtkWidget* fullscreenButton;
+    UiWidgets uiWidgets;
     Menubar menubar;
 
-    videoWindow  = gtk_drawing_area_new();
-    g_signal_connect (videoWindow, "realize", G_CALLBACK (realize_cb), NULL);
+    uiWidgets.videoWindow  = gtk_drawing_area_new();
 
-    playButton   = gtk_button_new_from_icon_name("media-playback-start", GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT (playButton), "clicked", G_CALLBACK (play_cb), NULL);
+    uiWidgets.playButton   = gtk_button_new_from_icon_name("media-playback-start", GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT (uiWidgets.playButton), "clicked", G_CALLBACK (play_cb), NULL);
 
-    pauseButton  = gtk_button_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT (pauseButton), "clicked", G_CALLBACK (pause_cb), NULL);
+    uiWidgets.pauseButton  = gtk_button_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT (uiWidgets.pauseButton), "clicked", G_CALLBACK (pause_cb), NULL);
 
-    stopButton   = gtk_button_new_from_icon_name("media-playback-stop", GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT (stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
+    uiWidgets.stopButton   = gtk_button_new_from_icon_name("media-playback-stop", GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT (uiWidgets.stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
 
-    volumeButton = gtk_volume_button_new();
-    gtk_scale_button_set_value(GTK_SCALE_BUTTON(volumeButton), 1.0);
-    g_signal_connect (G_OBJECT(volumeButton), "value-changed", G_CALLBACK(volume_cb), NULL);
+    uiWidgets.volumeButton = gtk_volume_button_new();
+    gtk_scale_button_set_value(GTK_SCALE_BUTTON(uiWidgets.volumeButton), 1.0);
+    g_signal_connect (G_OBJECT(uiWidgets.volumeButton), "value-changed", G_CALLBACK(volume_cb), NULL);
 
 
-    fullscreenButton = gtk_button_new_from_icon_name("view-fullscreen", GTK_ICON_SIZE_BUTTON);
+    uiWidgets.fullscreenButton = gtk_button_new_from_icon_name("view-fullscreen", GTK_ICON_SIZE_BUTTON);
 
     slider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
     gtk_scale_set_draw_value(GTK_SCALE(slider), 0);
@@ -158,11 +162,11 @@ int createUi(GtkWidget* window) {
     createMenubar(&menubar);
 
     controls = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
-    gtk_box_pack_start (GTK_BOX (controls), playButton, FALSE, FALSE, 2);
-    gtk_box_pack_start (GTK_BOX (controls), pauseButton, FALSE, FALSE, 2);
-    gtk_box_pack_start (GTK_BOX (controls), stopButton, FALSE, FALSE, 2);
-    gtk_box_pack_start (GTK_BOX(controls), volumeButton, FALSE, FALSE, 2);
-    gtk_box_pack_start (GTK_BOX(controls), fullscreenButton, FALSE, FALSE, 2);
+    gtk_box_pack_start (GTK_BOX (controls), uiWidgets.playButton, FALSE, FALSE, 2);
+    gtk_box_pack_start (GTK_BOX (controls), uiWidgets.pauseButton, FALSE, FALSE, 2);
+    gtk_box_pack_start (GTK_BOX (controls), uiWidgets.stopButton, FALSE, FALSE, 2);
+    gtk_box_pack_start (GTK_BOX(controls), uiWidgets.volumeButton, FALSE, FALSE, 2);
+    gtk_box_pack_start (GTK_BOX(controls), uiWidgets.fullscreenButton, FALSE, FALSE, 2);
 
     bottomPanel = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_container_set_border_width(GTK_CONTAINER(bottomPanel), 5);
@@ -171,7 +175,7 @@ int createUi(GtkWidget* window) {
 
     mainBox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_pack_start(GTK_BOX(mainBox), menubar.menubar, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(mainBox), videoWindow, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(mainBox), uiWidgets.videoWindow, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(mainBox), bottomPanel, FALSE, FALSE, 2);
     gtk_container_add (GTK_CONTAINER (window), mainBox);
     return 0;
@@ -221,6 +225,7 @@ int createOpenMenu (OpenMenu* openMenu, GtkWidget* menubar) {
             gtk_menu_item_new_with_label("Open");
     openMenu->fileMi   =
             gtk_menu_item_new_with_label("File");
+    g_signal_connect (openMenu->fileMi, "activate", G_CALLBACK (fileMenu_cb), NULL);
     openMenu->closeMi  =
             gtk_menu_item_new_with_label("Close");
     openMenu->exitMi   =
@@ -345,7 +350,7 @@ int createHelpMenu (HelpMenu* helpMenu, GtkWidget* menubar) {
     return 0;
 }
 
-static void realize_cb (GtkWidget *widget, gpointer data) {
+static void createContext (GtkWidget *widget) {
     GdkWindow *window = gtk_widget_get_window (widget);
     guintptr window_handle;
 
@@ -381,12 +386,34 @@ static void slider_cb (GtkRange *range, gpointer data) {
 
 static void volume_cb (GtkRange* volumeButton, gpointer data) {
     gdouble value = gtk_scale_button_get_value(GTK_SCALE_BUTTON(volumeButton));
-    //g_print("volume %f\n", value);
     backendSetVolume(value);
 }
 
+void fileMenu_cb(GtkWidget *widget, gpointer data) {
+    GtkFileChooserNative *fileChooser;
+    GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
+    GtkWindow *window = GTK_WINDOW(gtk_widget_get_toplevel(widget));
+    int res;
+
+    fileChooser = gtk_file_chooser_native_new("Open File", window,
+            action, "_Open", "_Cancel");
+
+    res = gtk_native_dialog_run(GTK_NATIVE_DIALOG(fileChooser));
+    if (res == GTK_RESPONSE_ACCEPT) {
+        char *filename;
+        GtkFileChooser *chooser = GTK_FILE_CHOOSER(fileChooser);
+        filename = gtk_file_chooser_get_filename(chooser);
+        const char *path = g_strconcat("file://", filename, NULL);
+
+
+
+        g_free(filename);
+    }
+    g_object_unref(fileChooser);
+}
+
 /* This function is called when the main window is closed */
-static void delete_event_cb (GtkWidget *widget, GdkEvent *event, gpointer data) {
+static void deleteEvent_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
     stop_cb (NULL, NULL);
     gtk_main_quit ();
 }
