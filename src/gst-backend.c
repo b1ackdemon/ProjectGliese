@@ -3,15 +3,6 @@
 #include "gst-backend.h"
 #include "ui.h"
 
-#include <gdk/gdk.h>
-#if defined (GDK_WINDOWING_X11)
-#include <gdk/gdkx.h>
-#elif defined (GDK_WINDOWING_WIN32)
-#include <gdk/gdkwin32.h>
-#elif defined (GDK_WINDOWING_QUARTZ)
-#include <gdk/gdkquartz.h>
-#endif
-
 typedef struct _CustomData {
     GstState state;
     gint64 duration;
@@ -21,24 +12,24 @@ typedef struct _CustomData {
 static GstElement* pipeline;
 static CustomData data;
 
-static void eos_cb (GstBus *bus, GstMessage *msg, CustomData *data);
-static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data);
-static void state_changed_cb (GstBus *bus, GstMessage *msg, CustomData *data);
+static void eos_cb (GstBus* bus, GstMessage* msg, CustomData* data);
+static void error_cb (GstBus* bus, GstMessage* msg, CustomData* data);
+static void state_changed_cb (GstBus* bus, GstMessage* msg, CustomData* data);
 
-void backendInit(int *argc, char ***argv){
+void backendInit (int* argc, char*** argv){
     gst_init (argc, argv);
 }
 
-int backendSetWindow(guintptr window) {
-    gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(pipeline), window);
+int backendSetWindow (guintptr window) {
+    gst_video_overlay_set_window_handle (GST_VIDEO_OVERLAY (pipeline), window);
     return 0;
 }
 
-int backendPlay(const gchar *filename) {
+int backendPlay (const gchar *filename) {
     GstBus* bus;
 
     data.duration = GST_CLOCK_TIME_NONE;
-    pipeline = gst_element_factory_make("playbin", "playbin");
+    pipeline = gst_element_factory_make ("playbin", "playbin");
     if (!pipeline) {
         g_printerr ("Not all elements could be created.\n");
         return -1;
@@ -47,9 +38,9 @@ int backendPlay(const gchar *filename) {
 
     bus = gst_element_get_bus (pipeline);
     gst_bus_add_signal_watch (bus);
-    g_signal_connect (G_OBJECT (bus), "message::error", (GCallback)error_cb, &data);
-    g_signal_connect (G_OBJECT (bus), "message::eos", (GCallback)eos_cb, &data);
-    g_signal_connect (G_OBJECT (bus), "message::state-changed", (GCallback)state_changed_cb, &data);
+    g_signal_connect (G_OBJECT (bus), "message::error", (GCallback) error_cb, &data);
+    g_signal_connect (G_OBJECT (bus), "message::eos", (GCallback) eos_cb, &data);
+    g_signal_connect (G_OBJECT (bus), "message::state-changed", (GCallback) state_changed_cb, &data);
     gst_object_unref (bus);
 
     data.ret = gst_element_set_state (pipeline, GST_STATE_PLAYING);
@@ -72,10 +63,10 @@ gdouble backendQueryDuration() {
     return  (gdouble) data.duration / GST_SECOND;
 }
 
-gboolean backendQueryPosition(gdouble* current) {
+gboolean backendQueryPosition (gdouble* current) {
     gboolean res;
     gint64 cur;
-    res = gst_element_query_position(pipeline, GST_FORMAT_TIME, &cur);
+    res = gst_element_query_position (pipeline, GST_FORMAT_TIME, &cur);
     *current = (gdouble) cur / GST_SECOND;
     return res;
 }
@@ -93,24 +84,24 @@ gboolean backendIsPausedOrPlaying() {
 
 void backendStop() {
     if (pipeline) {
-        gst_element_set_state(pipeline, GST_STATE_READY);
+        gst_element_set_state (pipeline, GST_STATE_READY);
     }
 }
 
 void backendResume() {
-    gst_element_set_state(pipeline, GST_STATE_PLAYING);
+    gst_element_set_state (pipeline, GST_STATE_PLAYING);
 }
 
 void backendPause() {
-    gst_element_set_state(pipeline, GST_STATE_PAUSED);
+    gst_element_set_state (pipeline, GST_STATE_PAUSED);
 }
 
-void backendSeek(gdouble value) {
-    gst_element_seek_simple(pipeline, GST_FORMAT_TIME,
+void backendSeek (gdouble value) {
+    gst_element_seek_simple (pipeline, GST_FORMAT_TIME,
             GST_SEEK_FLAG_FLUSH, (gint64)(value * GST_SECOND));
 }
 
-void backendSetVolume(gdouble volume) {
+void backendSetVolume (gdouble volume) {
     g_object_set(pipeline, "volume", volume, NULL);
 }
 
@@ -119,13 +110,13 @@ void backendDeInit() {
     gst_object_unref (pipeline);
 }
 
-static void eos_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
+static void eos_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
     g_print ("End-Of-Stream reached.\n");
     gst_element_set_state (pipeline, GST_STATE_READY);
 }
 
 /* This function is called when an error message is posted on the bus */
-static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
+static void error_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
     GError *err;
     gchar *debug_info;
 
@@ -143,7 +134,7 @@ static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
 
 /* This function is called when the pipeline changes states. We use it to
  * keep track of the current state. */
-static void state_changed_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
+static void state_changed_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
     GstState old_state, new_state, pending_state;
     gst_message_parse_state_changed (msg, &old_state, &new_state, &pending_state);
     if (GST_MESSAGE_SRC (msg) == GST_OBJECT (pipeline)) {

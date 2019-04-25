@@ -1,15 +1,15 @@
 #pragma once
 
-void backendInit(int *argc, char ***argv);
+void backendInit (int* argc, char*** argv);
 void backendDeInit();
-int backendSetWindow(guintptr window);
-int  backendPlay(const gchar *filename);
+int backendSetWindow (guintptr window);
+int  backendPlay (const gchar *filename);
 void backendPause();
 void backendStop();
 void backendResume();
-void backendSeek(gdouble value);
-void backendSetVolume(gdouble volume);
+void backendSeek (gdouble value);
+void backendSetVolume (gdouble volume);
 gdouble backendQueryDuration();
-gboolean backendQueryPosition(gdouble* current);
+gboolean backendQueryPosition (gdouble* current);
 gboolean backendDurationIsValid();
 gboolean backendIsPausedOrPlaying();

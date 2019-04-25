@@ -83,38 +83,37 @@ typedef struct _UiWidgets {
 
 static UiWidgets uiWidgets;
 
-int createOpenMenu (OpenMenu* openMenu, GtkWidget* menubar);
-int createVideoMenu     (VideoMenu* videoMenu,         GtkWidget* menubar);
-int createAudioMenu     (AudioMenu* audioMenu,         GtkWidget* menubar);
-int createSubtitlesMenu (SubtitlesMenu* subtitlesMenu, GtkWidget* menubar);
-int createViewMenu      (ViewMenu* viewMenu,           GtkWidget* menubar);
-int createOptionsMenu   (OptionsMenu* optionsMenu,     GtkWidget* menubar);
-int createHelpMenu      (HelpMenu* helpMenu,           GtkWidget* menubar);
-int createUi            (GtkWidget* window);
-int createMenubar       (Menubar* menubar);
-int createWindow(const char* name, int width, int height);
-static void createContext (GtkWidget *widget);
+int createOpenMenu        (OpenMenu* openMenu,           GtkWidget* menubar);
+int createVideoMenu       (VideoMenu* videoMenu,         GtkWidget* menubar);
+int createAudioMenu       (AudioMenu* audioMenu,         GtkWidget* menubar);
+int createSubtitlesMenu   (SubtitlesMenu* subtitlesMenu, GtkWidget* menubar);
+int createViewMenu        (ViewMenu* viewMenu,           GtkWidget* menubar);
+int createOptionsMenu     (OptionsMenu* optionsMenu,     GtkWidget* menubar);
+int createHelpMenu        (HelpMenu* helpMenu,           GtkWidget* menubar);
+int createUi              (GtkWidget* window);
+int createMenubar         (Menubar* menubar);
+int createWindow          (const char* name, int width, int height);
+static void createContext (GtkWidget* widget);
 
-static void play_cb (GtkButton *button, gpointer data);
-static void pause_cb (GtkButton *button, gpointer data);
-static void stop_cb (GtkButton *button, gpointer data);
-static void slider_cb (GtkRange *range, gpointer data);
-static void volume_cb (GtkRange* volumeButton, gpointer data);
-static void fullscreen_cb (GtkWidget* button, gpointer data);
-static void overlayFullscreen_cb (GtkWidget* widget, GtkWindow* mainWindow);
-static void deleteEvent_cb(GtkWidget *widget, GdkEvent *event, gpointer data);
-static void fileMenu_cb (GtkWidget *widget);
-static void fullscreenRealize_cb (GtkWidget* widget, gpointer data);
+static void play_cb              (GtkButton* button,       gpointer data);
+static void pause_cb             (GtkButton* button,       gpointer data);
+static void stop_cb              (GtkButton* button,       gpointer data);
+static void slider_cb            (GtkRange*  range,        gpointer data);
+static void volume_cb            (GtkRange*  volumeButton, gpointer data);
+static void fullscreen_cb        (GtkWidget* button,       gpointer data);
+static void fullscreenRealize_cb (GtkWidget* widget,       gpointer data);
+static void overlayFullscreen_cb (GtkWidget* widget,       GtkWindow* mainWindow);
+static void fileMenu_cb          (GtkWidget* widget);
+static void deleteEvent_cb       (GtkWidget* widget, GdkEvent *event, gpointer data);
+
+int main (int argc, char **argv) {
+    gtk_init (&argc, &argv);
+    backendInit (&argc, &argv);
 
 
-int main(int argc, char **argv) {
-    gtk_init(&argc, &argv);
-    backendInit(&argc, &argv);
+    createWindow ("ProjectGliese", 800, 520);
 
-
-    createWindow("ProjectGliese", 800, 520);
-
-    g_timeout_add_seconds(1, (GSourceFunc) refreshUi, NULL);
+    g_timeout_add_seconds (1, (GSourceFunc) refreshUi, NULL);
 
     /* Start the GTK mail loop. */
     gtk_main();
@@ -122,19 +121,19 @@ int main(int argc, char **argv) {
     backendDeInit();
     return 0;
 }
-int createWindow(const char* name, int width, int height) {
+int createWindow (const char* name, int width, int height) {
     GtkWidget* window;
-    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
-    gtk_window_set_default_size(GTK_WINDOW(window), width, height);
-    gtk_window_set_title(GTK_WINDOW(window), name);
+    window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_position (GTK_WINDOW (window), GTK_WIN_POS_CENTER);
+    gtk_window_set_default_size (GTK_WINDOW (window), width, height);
+    gtk_window_set_title (GTK_WINDOW (window), name);
     g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK(deleteEvent_cb), NULL);
-    createUi(window);
-    gtk_widget_show_all(window);
+    createUi (window);
+    gtk_widget_show_all (window);
     return 0;
 }
 
-int createUi(GtkWidget* window) {
+int createUi (GtkWidget* window) {
     GtkWidget* controls;
     GtkWidget* mainBox;
     GtkWidget* bottomPanel;
@@ -142,35 +141,35 @@ int createUi(GtkWidget* window) {
     Menubar menubar;
 
     uiWidgets.videoWindow  = gtk_drawing_area_new();
-    uiWidgets.playButton   = gtk_button_new_from_icon_name("media-playback-start", GTK_ICON_SIZE_BUTTON);
-    uiWidgets.pauseButton  = gtk_button_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
-    uiWidgets.stopButton   = gtk_button_new_from_icon_name("media-playback-stop", GTK_ICON_SIZE_BUTTON);
+    uiWidgets.playButton   = gtk_button_new_from_icon_name ("media-playback-start", GTK_ICON_SIZE_BUTTON);
+    uiWidgets.pauseButton  = gtk_button_new_from_icon_name ("media-playback-pause", GTK_ICON_SIZE_BUTTON);
+    uiWidgets.stopButton   = gtk_button_new_from_icon_name ("media-playback-stop", GTK_ICON_SIZE_BUTTON);
     uiWidgets.volumeButton = gtk_volume_button_new();
-    gtk_scale_button_set_value(GTK_SCALE_BUTTON(uiWidgets.volumeButton), 1.0);
+    gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), 1.0);
 
-    uiWidgets.fullscreenButton = gtk_button_new_from_icon_name("view-fullscreen", GTK_ICON_SIZE_BUTTON);
+    uiWidgets.fullscreenButton = gtk_button_new_from_icon_name ("view-fullscreen", GTK_ICON_SIZE_BUTTON);
 
     uiWidgets.slider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
-    gtk_scale_set_draw_value(GTK_SCALE(uiWidgets.slider), 0);
+    gtk_scale_set_draw_value (GTK_SCALE (uiWidgets.slider), 0);
 
-    createMenubar(&menubar);
+    createMenubar (&menubar);
 
     controls = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start (GTK_BOX (controls), uiWidgets.playButton, FALSE, FALSE, 2);
     gtk_box_pack_start (GTK_BOX (controls), uiWidgets.pauseButton, FALSE, FALSE, 2);
     gtk_box_pack_start (GTK_BOX (controls), uiWidgets.stopButton, FALSE, FALSE, 2);
-    gtk_box_pack_start (GTK_BOX(controls), uiWidgets.volumeButton, FALSE, FALSE, 2);
-    gtk_box_pack_start (GTK_BOX(controls), uiWidgets.fullscreenButton, FALSE, FALSE, 2);
+    gtk_box_pack_start (GTK_BOX (controls), uiWidgets.volumeButton, FALSE, FALSE, 2);
+    gtk_box_pack_start (GTK_BOX (controls), uiWidgets.fullscreenButton, FALSE, FALSE, 2);
 
-    bottomPanel = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(bottomPanel), 5);
-    gtk_box_pack_start(GTK_BOX(bottomPanel), uiWidgets.slider, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(bottomPanel), controls, FALSE, FALSE, 2);
+    bottomPanel = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+    gtk_container_set_border_width (GTK_CONTAINER (bottomPanel), 5);
+    gtk_box_pack_start (GTK_BOX (bottomPanel), uiWidgets.slider, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (bottomPanel), controls, FALSE, FALSE, 2);
 
-    mainBox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_box_pack_start(GTK_BOX(mainBox), menubar.menubar, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(mainBox), uiWidgets.videoWindow, TRUE, TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(mainBox), bottomPanel, FALSE, FALSE, 2);
+    mainBox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+    gtk_box_pack_start (GTK_BOX (mainBox), menubar.menubar, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (mainBox), uiWidgets.videoWindow, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (mainBox), bottomPanel, FALSE, FALSE, 2);
     gtk_container_add (GTK_CONTAINER (window), mainBox);
     return 0;
 }
@@ -185,10 +184,10 @@ gboolean refreshUi() {
 
     if (!backendDurationIsValid()) {
         duration = backendQueryDuration();
-        gtk_range_set_range(GTK_RANGE(uiWidgets.slider), 0, duration);
+        gtk_range_set_range (GTK_RANGE (uiWidgets.slider), 0, duration);
     }
 
-    if (backendQueryPosition(&current)) {
+    if (backendQueryPosition (&current)) {
         /* Block the "value-changed" signal, so the slider_cb function is not called
          * (which would trigger a seek the user has not requested) */
         g_signal_handler_block (uiWidgets.slider, uiWidgets.sliderUpdateSignalId);
@@ -200,15 +199,15 @@ gboolean refreshUi() {
     return TRUE;
 }
 
-int createMenubar(Menubar* menubar) {
+int createMenubar (Menubar* menubar) {
     menubar->menubar = gtk_menu_bar_new();
-    createOpenMenu(&menubar->openMenu, menubar->menubar);
-    createVideoMenu(&menubar->videoMenu, menubar->menubar);
-    createAudioMenu(&menubar->audioMenu, menubar->menubar);
-    createSubtitlesMenu(&menubar->subtitlesMenu, menubar->menubar);
-    createViewMenu(&menubar->viewMenu, menubar->menubar);
-    createOptionsMenu(&menubar->optionsMenu, menubar->menubar);
-    createHelpMenu(&menubar->helpMenu, menubar->menubar);
+    createOpenMenu      (&menubar->openMenu,      menubar->menubar);
+    createVideoMenu     (&menubar->videoMenu,     menubar->menubar);
+    createAudioMenu     (&menubar->audioMenu,     menubar->menubar);
+    createSubtitlesMenu (&menubar->subtitlesMenu, menubar->menubar);
+    createViewMenu      (&menubar->viewMenu,      menubar->menubar);
+    createOptionsMenu   (&menubar->optionsMenu,   menubar->menubar);
+    createHelpMenu      (&menubar->helpMenu,      menubar->menubar);
     return 0;
 }
 
@@ -216,23 +215,23 @@ int createOpenMenu (OpenMenu* openMenu, GtkWidget* menubar) {
     openMenu->openMenu = gtk_menu_new();
 
     openMenu->OpenMi   =
-            gtk_menu_item_new_with_label("Open");
+            gtk_menu_item_new_with_label ("Open");
     openMenu->fileMi   =
-            gtk_menu_item_new_with_label("File");
+            gtk_menu_item_new_with_label ("File");
     g_signal_connect (openMenu->fileMi, "activate", G_CALLBACK (fileMenu_cb), &uiWidgets);
     openMenu->closeMi  =
-            gtk_menu_item_new_with_label("Close");
+            gtk_menu_item_new_with_label ("Close");
     openMenu->exitMi   =
-            gtk_menu_item_new_with_label("Exit");
+            gtk_menu_item_new_with_label ("Exit");
 
-    gtk_menu_item_set_submenu(GTK_MENU_ITEM(openMenu->OpenMi),
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (openMenu->OpenMi),
             openMenu->openMenu);
-    gtk_menu_shell_append(GTK_MENU_SHELL(openMenu->openMenu),
+    gtk_menu_shell_append (GTK_MENU_SHELL (openMenu->openMenu),
             openMenu->fileMi);
-    gtk_menu_shell_append(GTK_MENU_SHELL(openMenu->openMenu),
+    gtk_menu_shell_append (GTK_MENU_SHELL (openMenu->openMenu),
             openMenu->closeMi);
-    gtk_menu_shell_append(GTK_MENU_SHELL(openMenu->openMenu), openMenu->exitMi);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), openMenu->OpenMi);
+    gtk_menu_shell_append (GTK_MENU_SHELL (openMenu->openMenu), openMenu->exitMi);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menubar), openMenu->OpenMi);
     return 0;
 }
 
@@ -240,19 +239,19 @@ int createVideoMenu (VideoMenu* videoMenu, GtkWidget* menubar) {
     videoMenu->videoMenu    = gtk_menu_new();
 
     videoMenu->videoMi      =
-            gtk_menu_item_new_with_label("Video");
+            gtk_menu_item_new_with_label ("Video");
     videoMenu->trackMi      =
-            gtk_menu_item_new_with_label("Track");
+            gtk_menu_item_new_with_label ("Track");
     videoMenu->fullscreenMi =
-            gtk_menu_item_new_with_label("FullScreen");
+            gtk_menu_item_new_with_label ("FullScreen");
 
-    gtk_menu_item_set_submenu(GTK_MENU_ITEM(videoMenu->videoMi),
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (videoMenu->videoMi),
             videoMenu->videoMenu);
-    gtk_menu_shell_append(GTK_MENU_SHELL(videoMenu->videoMenu),
+    gtk_menu_shell_append (GTK_MENU_SHELL (videoMenu->videoMenu),
             videoMenu->trackMi);
-    gtk_menu_shell_append(GTK_MENU_SHELL(videoMenu->videoMenu),
+    gtk_menu_shell_append (GTK_MENU_SHELL (videoMenu->videoMenu),
             videoMenu->fullscreenMi);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), videoMenu->videoMi);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menubar), videoMenu->videoMi);
     return 0;
 }
 
@@ -260,19 +259,19 @@ int createAudioMenu (AudioMenu* audioMenu, GtkWidget* menubar) {
     audioMenu->audioMenu = gtk_menu_new();
 
     audioMenu->audioMi   =
-            gtk_menu_item_new_with_label("Audio");
+            gtk_menu_item_new_with_label ("Audio");
     audioMenu->trackMi   =
-            gtk_menu_item_new_with_label("Track");
+            gtk_menu_item_new_with_label ("Track");
     audioMenu->muteMi    =
-            gtk_menu_item_new_with_label("Mute");
+            gtk_menu_item_new_with_label ("Mute");
 
-    gtk_menu_item_set_submenu(GTK_MENU_ITEM(audioMenu->audioMi),
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (audioMenu->audioMi),
             audioMenu->audioMenu);
-    gtk_menu_shell_append(GTK_MENU_SHELL(audioMenu->audioMenu),
+    gtk_menu_shell_append (GTK_MENU_SHELL (audioMenu->audioMenu),
             audioMenu->trackMi);
-    gtk_menu_shell_append(GTK_MENU_SHELL(audioMenu->audioMenu),
+    gtk_menu_shell_append (GTK_MENU_SHELL (audioMenu->audioMenu),
             audioMenu->muteMi);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
+    gtk_menu_shell_append (GTK_MENU_SHELL(menubar),
             audioMenu->audioMi);
     return 0;
 }
@@ -281,19 +280,19 @@ int createSubtitlesMenu (SubtitlesMenu* subtitlesMenu, GtkWidget* menubar) {
     subtitlesMenu->subtitlesMenu    = gtk_menu_new();
 
     subtitlesMenu->subtitlesMi      =
-            gtk_menu_item_new_with_label("Subtitles");
+            gtk_menu_item_new_with_label ("Subtitles");
     subtitlesMenu->primaryTrackMi   =
-            gtk_menu_item_new_with_label("Primary track");
+            gtk_menu_item_new_with_label ("Primary track");
     subtitlesMenu->secondaryTrackMi =
-            gtk_menu_item_new_with_label("Secondary track");
+            gtk_menu_item_new_with_label ("Secondary track");
 
-    gtk_menu_item_set_submenu(GTK_MENU_ITEM(subtitlesMenu->subtitlesMi),
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (subtitlesMenu->subtitlesMi),
             subtitlesMenu->subtitlesMenu);
-    gtk_menu_shell_append(GTK_MENU_SHELL(subtitlesMenu->subtitlesMenu),
+    gtk_menu_shell_append (GTK_MENU_SHELL (subtitlesMenu->subtitlesMenu),
             subtitlesMenu->primaryTrackMi);
-    gtk_menu_shell_append(GTK_MENU_SHELL(subtitlesMenu->subtitlesMenu),
+    gtk_menu_shell_append (GTK_MENU_SHELL (subtitlesMenu->subtitlesMenu),
             subtitlesMenu->secondaryTrackMi);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
+    gtk_menu_shell_append (GTK_MENU_SHELL(menubar),
             subtitlesMenu->subtitlesMi);
     return 0;
 }
@@ -301,15 +300,15 @@ int createSubtitlesMenu (SubtitlesMenu* subtitlesMenu, GtkWidget* menubar) {
 int createViewMenu (ViewMenu* viewMenu, GtkWidget* menubar) {
     viewMenu->viewMenu = gtk_menu_new();
 
-    viewMenu->viewMi   = gtk_menu_item_new_with_label("View");
+    viewMenu->viewMi   = gtk_menu_item_new_with_label ("View");
     viewMenu->informationAndPropertiesMi =
-            gtk_menu_item_new_with_label("Information and properties");
+            gtk_menu_item_new_with_label ("Information and properties");
 
-    gtk_menu_item_set_submenu(GTK_MENU_ITEM(viewMenu->viewMi),
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (viewMenu->viewMi),
             viewMenu->viewMenu);
-    gtk_menu_shell_append(GTK_MENU_SHELL(viewMenu->viewMenu),
+    gtk_menu_shell_append (GTK_MENU_SHELL (viewMenu->viewMenu),
             viewMenu->informationAndPropertiesMi);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), viewMenu->viewMi);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menubar), viewMenu->viewMi);
     return 0;
 }
 
@@ -317,15 +316,15 @@ int createOptionsMenu (OptionsMenu* optionsMenu, GtkWidget* menubar) {
     optionsMenu->optionsMenu   = gtk_menu_new();
 
     optionsMenu->optionsMi     =
-            gtk_menu_item_new_with_label("Options");
+            gtk_menu_item_new_with_label ("Options");
     optionsMenu->preferencesMi =
-            gtk_menu_item_new_with_label("Preferences");
+            gtk_menu_item_new_with_label ("Preferences");
 
-    gtk_menu_item_set_submenu(GTK_MENU_ITEM(optionsMenu->optionsMi),
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (optionsMenu->optionsMi),
             optionsMenu->optionsMenu);
-    gtk_menu_shell_append(GTK_MENU_SHELL(optionsMenu->optionsMenu),
+    gtk_menu_shell_append (GTK_MENU_SHELL (optionsMenu->optionsMenu),
             optionsMenu->preferencesMi);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar),
+    gtk_menu_shell_append (GTK_MENU_SHELL (menubar),
             optionsMenu->optionsMi);
     return 0;
 }
@@ -336,11 +335,11 @@ int createHelpMenu (HelpMenu* helpMenu, GtkWidget* menubar) {
     helpMenu->helpMi  = gtk_menu_item_new_with_label("Help");
     helpMenu->aboutMi = gtk_menu_item_new_with_label("About");
 
-    gtk_menu_item_set_submenu(GTK_MENU_ITEM(helpMenu->helpMi),
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (helpMenu->helpMi),
             helpMenu->helpMenu);
-    gtk_menu_shell_append(GTK_MENU_SHELL(helpMenu->helpMenu),
+    gtk_menu_shell_append (GTK_MENU_SHELL (helpMenu->helpMenu),
             helpMenu->aboutMi);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), helpMenu->helpMi);
+    gtk_menu_shell_append (GTK_MENU_SHELL(menubar), helpMenu->helpMi);
     return 0;
 }
 
@@ -348,8 +347,9 @@ static void createContext (GtkWidget *widget) {
     GdkWindow *window = gtk_widget_get_window (widget);
     guintptr window_handle;
 
-    if (!gdk_window_ensure_native (window))
+    if (!gdk_window_ensure_native (window)) {
         g_error ("Couldn't create native window needed for GstVideoOverlay!");
+    }
 
 #if defined (GDK_WINDOWING_WIN32)
     window_handle = (guintptr)GDK_WINDOW_HWND (window);
@@ -358,7 +358,7 @@ static void createContext (GtkWidget *widget) {
 #elif defined (GDK_WINDOWING_X11)
     window_handle = GDK_WINDOW_XID (window);
 #endif
-    backendSetWindow(window_handle);
+    backendSetWindow (window_handle);
 }
 
 static void play_cb (GtkButton *button, gpointer data) {
@@ -374,29 +374,28 @@ static void stop_cb (GtkButton *button, gpointer data) {
 }
 
 static void slider_cb (GtkRange *range, gpointer data) {
-    gdouble value = gtk_range_get_value(GTK_RANGE(range));
-    backendSeek(value);
+    gdouble value = gtk_range_get_value (GTK_RANGE (range));
+    backendSeek (value);
 }
 
 static void volume_cb (GtkRange* volumeButton, gpointer data) {
-    gdouble value = gtk_scale_button_get_value(GTK_SCALE_BUTTON(volumeButton));
-    backendSetVolume(value);
+    gdouble value = gtk_scale_button_get_value (GTK_SCALE_BUTTON (volumeButton));
+    backendSetVolume (value);
 }
 
 static void fullscreen_cb (GtkWidget* button, gpointer data) {
     GtkWidget* controls;
-    GtkWindow* parentWindow = GTK_WINDOW(gtk_widget_get_toplevel(button));
+    GtkWindow* parentWindow = GTK_WINDOW (gtk_widget_get_toplevel(button));
 
-    GtkWidget* fullscreenWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_position (GTK_WINDOW(fullscreenWindow), GTK_WIN_POS_CENTER);
-    gtk_window_set_title (GTK_WINDOW(fullscreenWindow), "ProjectGliese");
-    gtk_window_set_default_size(GTK_WINDOW(fullscreenWindow), 1360, 768);
+    GtkWidget* fullscreenWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_position (GTK_WINDOW (fullscreenWindow), GTK_WIN_POS_CENTER);
+    gtk_window_set_title (GTK_WINDOW (fullscreenWindow), "ProjectGliese");
     GtkWidget* rootPane = gtk_overlay_new();
-    gtk_container_add(GTK_CONTAINER(fullscreenWindow), rootPane);
+    gtk_container_add (GTK_CONTAINER (fullscreenWindow), rootPane);
 
     GtkWidget* videoWindow = gtk_drawing_area_new();
-    gtk_container_add(GTK_CONTAINER(rootPane), videoWindow);
-    g_signal_connect(G_OBJECT(videoWindow), "realize", G_CALLBACK(fullscreenRealize_cb), NULL);
+    gtk_container_add (GTK_CONTAINER (rootPane), videoWindow);
+    g_signal_connect (G_OBJECT (videoWindow), "realize", G_CALLBACK (fullscreenRealize_cb), NULL);
 
     GtkWidget* playButton  = gtk_button_new_from_icon_name("media-playback-start", GTK_ICON_SIZE_BUTTON);
     g_signal_connect (G_OBJECT (playButton), "clicked", G_CALLBACK (play_cb), NULL);
@@ -408,13 +407,13 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
     g_signal_connect (G_OBJECT (stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
 
     GtkWidget* volumeButton = gtk_volume_button_new();
-    g_signal_connect (G_OBJECT(volumeButton), "value-changed", G_CALLBACK(volume_cb), NULL);
+    g_signal_connect (G_OBJECT (volumeButton), "value-changed", G_CALLBACK (volume_cb), NULL);
 
     GtkWidget* fullscreenSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
-    gtk_scale_set_draw_value(GTK_SCALE(fullscreenSlider), 0);
+    gtk_scale_set_draw_value (GTK_SCALE (fullscreenSlider), 0);
 
-    GtkWidget* fullscreenButton = gtk_button_new_from_icon_name("view-fullscreen", GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT(fullscreenButton), "clicked", G_CALLBACK(overlayFullscreen_cb), parentWindow);
+    GtkWidget* fullscreenButton = gtk_button_new_from_icon_name ("view-fullscreen", GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT (fullscreenButton), "clicked", G_CALLBACK (overlayFullscreen_cb), parentWindow);
 
     controls = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start (GTK_BOX (controls), playButton,       FALSE, FALSE, 2);
@@ -423,65 +422,65 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
     gtk_box_pack_start (GTK_BOX (controls), volumeButton,     FALSE, FALSE, 2);
     gtk_box_pack_start (GTK_BOX (controls), fullscreenSlider, TRUE,  TRUE,  2);
     gtk_box_pack_start (GTK_BOX (controls), fullscreenButton, False, False, 2);
-    gtk_container_set_border_width(GTK_CONTAINER(controls), 3);
+    gtk_container_set_border_width (GTK_CONTAINER (controls), 3);
 
-    gtk_overlay_add_overlay(GTK_OVERLAY(rootPane), controls);
-    gtk_widget_set_valign(controls, GTK_ALIGN_END);
+    gtk_overlay_add_overlay (GTK_OVERLAY (rootPane), controls);
+    gtk_widget_set_valign (controls, GTK_ALIGN_END);
 
-    gtk_widget_show_all(fullscreenWindow);
-    gtk_window_fullscreen(GTK_WINDOW(fullscreenWindow));
+    gtk_widget_show_all (fullscreenWindow);
+    gtk_window_fullscreen (GTK_WINDOW (fullscreenWindow));
 
-    gtk_widget_hide(GTK_WIDGET(parentWindow));
+    gtk_widget_hide (GTK_WIDGET (parentWindow));
 }
 
 static void overlayFullscreen_cb (GtkWidget* widget, GtkWindow* mainWindow) {
-    GtkWindow* fullscreenWindow = GTK_WINDOW(gtk_widget_get_toplevel(widget));
-    gtk_window_close(fullscreenWindow);
+    GtkWindow* fullscreenWindow = GTK_WINDOW (gtk_widget_get_toplevel(widget));
+    gtk_window_close (fullscreenWindow);
 
-    gtk_widget_show(GTK_WIDGET(mainWindow));
-    createContext(uiWidgets.videoWindow);
+    gtk_widget_show (GTK_WIDGET (mainWindow));
+    createContext (uiWidgets.videoWindow);
 }
 
 static void fullscreenRealize_cb (GtkWidget* widget, gpointer data) {
-    createContext(widget);
+    createContext (widget);
 }
 
 static void fileMenu_cb (GtkWidget *widget) {
     GtkFileChooserNative *fileChooser;
     GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
-    GtkWindow *window = GTK_WINDOW(gtk_widget_get_toplevel(widget));
+    GtkWindow *window = GTK_WINDOW (gtk_widget_get_toplevel(widget));
     int res;
 
-    fileChooser = gtk_file_chooser_native_new("Open File", window,
+    fileChooser = gtk_file_chooser_native_new ("Open File", window,
             action, "_Open", "_Cancel");
 
-    res = gtk_native_dialog_run(GTK_NATIVE_DIALOG(fileChooser));
+    res = gtk_native_dialog_run (GTK_NATIVE_DIALOG (fileChooser));
     if (res == GTK_RESPONSE_ACCEPT) {
         char *filename;
-        GtkFileChooser *chooser = GTK_FILE_CHOOSER(fileChooser);
-        filename = gtk_file_chooser_get_filename(chooser);
-        const char *path = g_strconcat("file://", filename, NULL);
+        GtkFileChooser *chooser = GTK_FILE_CHOOSER (fileChooser);
+        filename = gtk_file_chooser_get_filename (chooser);
+        const char *path = g_strconcat ("file://", filename, NULL);
 
-        backendPlay(path);
-        createContext(uiWidgets.videoWindow);
+        backendPlay (path);
+        createContext (uiWidgets.videoWindow);
 
         g_signal_connect (G_OBJECT (uiWidgets.playButton), "clicked", G_CALLBACK (play_cb), NULL);
         g_signal_connect (G_OBJECT (uiWidgets.pauseButton), "clicked", G_CALLBACK (pause_cb), NULL);
         g_signal_connect (G_OBJECT (uiWidgets.stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
-        g_signal_connect (G_OBJECT(uiWidgets.fullscreenButton), "clicked", G_CALLBACK(fullscreen_cb), NULL);
-        g_signal_connect (G_OBJECT(uiWidgets.volumeButton), "value-changed", G_CALLBACK(volume_cb), NULL);
+        g_signal_connect (G_OBJECT(uiWidgets.fullscreenButton), "clicked", G_CALLBACK (fullscreen_cb), NULL);
+        g_signal_connect (G_OBJECT(uiWidgets.volumeButton), "value-changed", G_CALLBACK (volume_cb), NULL);
         uiWidgets.sliderUpdateSignalId =
                 g_signal_connect (G_OBJECT (uiWidgets.slider), "value-changed",
                         G_CALLBACK (slider_cb), NULL);
-        gtk_scale_button_set_value(GTK_SCALE_BUTTON(uiWidgets.volumeButton), 1.0);
+        gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), 1.0);
 
-        g_free(filename);
+        g_free (filename);
     }
-    g_object_unref(fileChooser);
+    g_object_unref (fileChooser);
 }
 
 /* This function is called when the main window is closed */
-static void deleteEvent_cb(GtkWidget *widget, GdkEvent *event, gpointer data) {
+static void deleteEvent_cb (GtkWidget *widget, GdkEvent *event, gpointer data) {
     stop_cb (NULL, NULL);
-    gtk_main_quit ();
+    gtk_main_quit();
 }
