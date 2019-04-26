@@ -73,7 +73,6 @@ typedef struct _Menubar {
 typedef struct _UiWidgets {
     GtkWidget* videoWindow;
     GtkWidget* playButton;
-    GtkWidget* pauseButton;
     GtkWidget* stopButton;
     GtkWidget* volumeButton;
     GtkWidget* fullscreenButton;
@@ -96,7 +95,6 @@ int createWindow          (const char* name, int width, int height);
 static void createContext (GtkWidget* widget);
 
 static void play_cb              (GtkButton* button,       gpointer data);
-static void pause_cb             (GtkButton* button,       gpointer data);
 static void stop_cb              (GtkButton* button,       gpointer data);
 static void slider_cb            (GtkRange*  range,        gpointer data);
 static void volume_cb            (GtkRange*  volumeButton, gpointer data);
@@ -142,7 +140,6 @@ int createUi (GtkWidget* window) {
 
     uiWidgets.videoWindow  = gtk_drawing_area_new();
     uiWidgets.playButton   = gtk_button_new_from_icon_name ("media-playback-start", GTK_ICON_SIZE_BUTTON);
-    uiWidgets.pauseButton  = gtk_button_new_from_icon_name ("media-playback-pause", GTK_ICON_SIZE_BUTTON);
     uiWidgets.stopButton   = gtk_button_new_from_icon_name ("media-playback-stop", GTK_ICON_SIZE_BUTTON);
     uiWidgets.volumeButton = gtk_volume_button_new();
     gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), 1.0);
@@ -156,7 +153,6 @@ int createUi (GtkWidget* window) {
 
     controls = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start (GTK_BOX (controls), uiWidgets.playButton, FALSE, FALSE, 2);
-    gtk_box_pack_start (GTK_BOX (controls), uiWidgets.pauseButton, FALSE, FALSE, 2);
     gtk_box_pack_start (GTK_BOX (controls), uiWidgets.stopButton, FALSE, FALSE, 2);
     gtk_box_pack_start (GTK_BOX (controls), uiWidgets.volumeButton, FALSE, FALSE, 2);
     gtk_box_pack_start (GTK_BOX (controls), uiWidgets.fullscreenButton, FALSE, FALSE, 2);
@@ -362,11 +358,15 @@ static void createContext (GtkWidget *widget) {
 }
 
 static void play_cb (GtkButton *button, gpointer data) {
-    backendResume();
-}
-
-static void pause_cb (GtkButton *button, gpointer data) {
-    backendPause();
+    if (!backendIsPlaying()) {
+        GtkWidget* icon = gtk_image_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
+        gtk_button_set_image (button, icon);
+        backendResume();
+    } else {
+        GtkWidget* icon = gtk_image_new_from_icon_name("media-playback-start", GTK_ICON_SIZE_BUTTON);
+        gtk_button_set_image (button, icon);
+        backendPause();
+    }
 }
 
 static void stop_cb (GtkButton *button, gpointer data) {
@@ -397,11 +397,8 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
     gtk_container_add (GTK_CONTAINER (rootPane), videoWindow);
     g_signal_connect (G_OBJECT (videoWindow), "realize", G_CALLBACK (fullscreenRealize_cb), NULL);
 
-    GtkWidget* playButton  = gtk_button_new_from_icon_name("media-playback-start", GTK_ICON_SIZE_BUTTON);
+    GtkWidget* playButton  = gtk_button_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
     g_signal_connect (G_OBJECT (playButton), "clicked", G_CALLBACK (play_cb), NULL);
-
-    GtkWidget* pauseButton  = gtk_button_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT (pauseButton), "clicked", G_CALLBACK (pause_cb), NULL);
 
     GtkWidget* stopButton   = gtk_button_new_from_icon_name("media-playback-stop", GTK_ICON_SIZE_BUTTON);
     g_signal_connect (G_OBJECT (stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
@@ -417,7 +414,6 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
 
     controls = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start (GTK_BOX (controls), playButton,       FALSE, FALSE, 2);
-    gtk_box_pack_start (GTK_BOX (controls), pauseButton,      FALSE, FALSE, 2);
     gtk_box_pack_start (GTK_BOX (controls), stopButton,       FALSE, FALSE, 2);
     gtk_box_pack_start (GTK_BOX (controls), volumeButton,     FALSE, FALSE, 2);
     gtk_box_pack_start (GTK_BOX (controls), fullscreenSlider, TRUE,  TRUE,  2);
@@ -464,8 +460,10 @@ static void fileMenu_cb (GtkWidget *widget) {
         backendPlay (path);
         createContext (uiWidgets.videoWindow);
 
+        GtkWidget* icon = gtk_image_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
+        gtk_button_set_image (GTK_BUTTON (uiWidgets.playButton), icon);
+
         g_signal_connect (G_OBJECT (uiWidgets.playButton), "clicked", G_CALLBACK (play_cb), NULL);
-        g_signal_connect (G_OBJECT (uiWidgets.pauseButton), "clicked", G_CALLBACK (pause_cb), NULL);
         g_signal_connect (G_OBJECT (uiWidgets.stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
         g_signal_connect (G_OBJECT(uiWidgets.fullscreenButton), "clicked", G_CALLBACK (fullscreen_cb), NULL);
         g_signal_connect (G_OBJECT(uiWidgets.volumeButton), "value-changed", G_CALLBACK (volume_cb), NULL);

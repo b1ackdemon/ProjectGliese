@@ -82,6 +82,10 @@ gboolean backendIsPausedOrPlaying() {
     return TRUE;
 }
 
+gboolean backendIsPlaying() {
+    return data.state == GST_STATE_PLAYING;
+}
+
 void backendStop() {
     if (pipeline) {
         gst_element_set_state (pipeline, GST_STATE_READY);

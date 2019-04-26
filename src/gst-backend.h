@@ -13,3 +13,4 @@ gdouble backendQueryDuration();
 gboolean backendQueryPosition (gdouble* current);
 gboolean backendDurationIsValid();
 gboolean backendIsPausedOrPlaying();
+gboolean backendIsPlaying();
