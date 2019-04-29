@@ -109,6 +109,12 @@ void backendSetVolume (gdouble volume) {
     g_object_set(pipeline, "volume", volume, NULL);
 }
 
+gdouble backendGetVolume() {
+    gdouble value = 0;
+    g_object_get(pipeline, "volume", &value, NULL);
+    return value;
+}
+
 void backendDeInit() {
     gst_element_set_state (pipeline, GST_STATE_NULL);
     gst_object_unref (pipeline);

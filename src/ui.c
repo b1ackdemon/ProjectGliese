@@ -203,12 +203,8 @@ gboolean refreshUi() {
         }
 
         if (backendQueryPosition (&current)) {
-            /* Block the "value-changed" signal, so the slider_cb function is not called
-             * (which would trigger a seek the user has not requested) */
             g_signal_handler_block (fullscreenSlider, flScrnSldrSgnId);
-            /* Set the position of the slider to the current pipeline position, in SECONDS */
             gtk_range_set_value (GTK_RANGE (fullscreenSlider), current);
-            /* Re-enable the signal */
             g_signal_handler_unblock (fullscreenSlider, flScrnSldrSgnId);
         }
     }
@@ -431,6 +427,7 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
 
     GtkWidget* volumeButton = gtk_volume_button_new();
     g_signal_connect (G_OBJECT (volumeButton), "value-changed", G_CALLBACK (volume_cb), NULL);
+    gtk_scale_button_set_value (GTK_SCALE_BUTTON (volumeButton), backendGetVolume());
 
     fullscreenSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
     gtk_scale_set_draw_value (GTK_SCALE (fullscreenSlider), 0);
@@ -465,6 +462,7 @@ static void overlayFullscreen_cb (GtkWidget* widget, GtkWindow* mainWindow) {
 
     gtk_widget_show (GTK_WIDGET (mainWindow));
     createContext (uiWidgets.videoWindow);
+    gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), backendGetVolume());
 }
 
 static void fullscreenRealize_cb (GtkWidget* widget, gpointer data) {
@@ -500,7 +498,7 @@ static void fileMenu_cb (GtkWidget *widget) {
         uiWidgets.sliderUpdateSignalId =
                 g_signal_connect (G_OBJECT (uiWidgets.slider), "value-changed",
                         G_CALLBACK (slider_cb), NULL);
-        gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), 1.0);
+        gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), backendGetVolume());
 
         g_free (filename);
     }

@@ -10,6 +10,7 @@ void backendResume();
 void backendSeek (gdouble value);
 void backendSetVolume (gdouble volume);
 gdouble backendQueryDuration();
+gdouble backendGetVolume();
 gboolean backendQueryPosition (gdouble* current);
 gboolean backendDurationIsValid();
 gboolean backendIsPausedOrPlaying();
