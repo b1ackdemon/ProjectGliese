@@ -82,7 +82,7 @@ typedef struct _UiWidgets {
 
 static UiWidgets uiWidgets;
 static GtkWidget* fullscreenSlider = NULL;
-static gulong flScrnSldrSgnId;
+static gulong fullScreenSliderId;
 
 int createOpenMenu        (OpenMenu* openMenu,           GtkWidget* menubar);
 int createVideoMenu       (VideoMenu* videoMenu,         GtkWidget* menubar);
@@ -137,7 +137,7 @@ int createWindow (const char* name, int width, int height) {
 int createUi (GtkWidget* window) {
     GtkWidget* controls;
     GtkWidget* mainBox;
-    GtkWidget* bottomPanel;
+//    GtkWidget* bottomPanel;
 
     Menubar menubar;
 
@@ -158,17 +158,13 @@ int createUi (GtkWidget* window) {
     gtk_box_pack_start (GTK_BOX (controls), uiWidgets.playButton, FALSE, FALSE, 2);
     gtk_box_pack_start (GTK_BOX (controls), uiWidgets.stopButton, FALSE, FALSE, 2);
     gtk_box_pack_start (GTK_BOX (controls), uiWidgets.volumeButton, FALSE, FALSE, 2);
+    gtk_box_pack_start (GTK_BOX (controls), uiWidgets.slider, TRUE, TRUE, 2);
     gtk_box_pack_start (GTK_BOX (controls), uiWidgets.fullscreenButton, FALSE, FALSE, 2);
-
-    bottomPanel = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
-    gtk_container_set_border_width (GTK_CONTAINER (bottomPanel), 5);
-    gtk_box_pack_start (GTK_BOX (bottomPanel), uiWidgets.slider, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (bottomPanel), controls, FALSE, FALSE, 2);
 
     mainBox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_pack_start (GTK_BOX (mainBox), menubar.menubar, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (mainBox), uiWidgets.videoWindow, TRUE, TRUE, 0);
-    gtk_box_pack_start (GTK_BOX (mainBox), bottomPanel, FALSE, FALSE, 2);
+    gtk_box_pack_start (GTK_BOX (mainBox), controls, FALSE, False, 5);
     gtk_container_add (GTK_CONTAINER (window), mainBox);
     return 0;
 }
@@ -203,9 +199,9 @@ gboolean refreshUi() {
         }
 
         if (backendQueryPosition (&current)) {
-            g_signal_handler_block (fullscreenSlider, flScrnSldrSgnId);
+            g_signal_handler_block (fullscreenSlider, fullScreenSliderId);
             gtk_range_set_value (GTK_RANGE (fullscreenSlider), current);
-            g_signal_handler_unblock (fullscreenSlider, flScrnSldrSgnId);
+            g_signal_handler_unblock (fullscreenSlider, fullScreenSliderId);
         }
     }
 
@@ -431,7 +427,7 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
 
     fullscreenSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
     gtk_scale_set_draw_value (GTK_SCALE (fullscreenSlider), 0);
-    flScrnSldrSgnId = g_signal_connect (G_OBJECT (fullscreenSlider), "value-changed",
+    fullScreenSliderId = g_signal_connect (G_OBJECT (fullscreenSlider), "value-changed",
                       G_CALLBACK (fullSlider_cb), NULL);
 
     GtkWidget* fullscreenButton = gtk_button_new_from_icon_name ("view-fullscreen", GTK_ICON_SIZE_BUTTON);
@@ -442,7 +438,7 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
     gtk_box_pack_start (GTK_BOX (controls), stopButton,       FALSE, FALSE, 2);
     gtk_box_pack_start (GTK_BOX (controls), volumeButton,     FALSE, FALSE, 2);
     gtk_box_pack_start (GTK_BOX (controls), fullscreenSlider, TRUE,  TRUE,  2);
-    gtk_box_pack_start (GTK_BOX (controls), fullscreenButton, False, False, 2);
+    gtk_box_pack_start (GTK_BOX (controls), fullscreenButton, FALSE, FALSE, 2);
     gtk_container_set_border_width (GTK_CONTAINER (controls), 3);
 
     gtk_overlay_add_overlay (GTK_OVERLAY (rootPane), controls);
