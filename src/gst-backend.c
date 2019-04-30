@@ -68,7 +68,7 @@ gboolean backendQueryPosition (gdouble* current) {
     gint64 cur;
     res = gst_element_query_position (pipeline, GST_FORMAT_TIME, &cur);
     *current = (gdouble) cur / GST_SECOND;
-    g_print ("Position %" GST_TIME_FORMAT " / %" GST_TIME_FORMAT "\r",
+    g_print ("Position %" GST_TIME_FORMAT " / %" GST_TIME_FORMAT "\r\n",
              GST_TIME_ARGS (cur), GST_TIME_ARGS (data.duration));
     return res;
 }
