@@ -24,14 +24,12 @@ typedef struct _VideoMenu {
     GtkWidget* videoMenu;
     GtkWidget* videoMi;
     GtkWidget* trackMi;
-    GtkWidget* fullscreenMi;
 } VideoMenu;
 
 typedef struct _AudioMenu {
     GtkWidget* audioMenu;
     GtkWidget* audioMi;
     GtkWidget* trackMi;
-    GtkWidget* muteMi;
 } AudioMenu;
 
 typedef struct _SubtitlesMenu {
@@ -83,6 +81,7 @@ typedef struct _UiWidgets {
 static UiWidgets uiWidgets;
 static GtkWidget* fullscreenSlider = NULL;
 static gulong fullScreenSliderId;
+static gboolean isPlaying = False;
 
 int createOpenMenu        (OpenMenu* openMenu,           GtkWidget* menubar);
 int createVideoMenu       (VideoMenu* videoMenu,         GtkWidget* menubar);
@@ -120,7 +119,9 @@ int main (int argc, char **argv) {
     /* Start the GTK mail loop. */
     gtk_main();
 
-    backendDeInit();
+    if (isPlaying) {
+        backendDeInit();
+    }
     return 0;
 }
 int createWindow (const char* name, int width, int height) {
@@ -251,15 +252,11 @@ int createVideoMenu (VideoMenu* videoMenu, GtkWidget* menubar) {
             gtk_menu_item_new_with_label ("Video");
     videoMenu->trackMi      =
             gtk_menu_item_new_with_label ("Track");
-    videoMenu->fullscreenMi =
-            gtk_menu_item_new_with_label ("FullScreen");
 
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (videoMenu->videoMi),
             videoMenu->videoMenu);
     gtk_menu_shell_append (GTK_MENU_SHELL (videoMenu->videoMenu),
             videoMenu->trackMi);
-    gtk_menu_shell_append (GTK_MENU_SHELL (videoMenu->videoMenu),
-            videoMenu->fullscreenMi);
     gtk_menu_shell_append (GTK_MENU_SHELL (menubar), videoMenu->videoMi);
     return 0;
 }
@@ -271,15 +268,11 @@ int createAudioMenu (AudioMenu* audioMenu, GtkWidget* menubar) {
             gtk_menu_item_new_with_label ("Audio");
     audioMenu->trackMi   =
             gtk_menu_item_new_with_label ("Track");
-    audioMenu->muteMi    =
-            gtk_menu_item_new_with_label ("Mute");
 
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (audioMenu->audioMi),
             audioMenu->audioMenu);
     gtk_menu_shell_append (GTK_MENU_SHELL (audioMenu->audioMenu),
             audioMenu->trackMi);
-    gtk_menu_shell_append (GTK_MENU_SHELL (audioMenu->audioMenu),
-            audioMenu->muteMi);
     gtk_menu_shell_append (GTK_MENU_SHELL(menubar),
             audioMenu->audioMi);
     return 0;
@@ -471,39 +464,43 @@ static void fullscreenRealize_cb (GtkWidget* widget, gpointer data) {
 }
 
 static void fileMenu_cb (GtkWidget *widget) {
-    GtkFileChooserNative *fileChooser;
-    GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
-    GtkWindow *window = GTK_WINDOW (gtk_widget_get_toplevel(widget));
-    int res;
+    if (!isPlaying) {
+        GtkFileChooserNative *fileChooser;
+        GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
+        GtkWindow *window = GTK_WINDOW (gtk_widget_get_toplevel(widget));
+        int res;
 
-    fileChooser = gtk_file_chooser_native_new ("Open File", window,
-            action, "_Open", "_Cancel");
+        fileChooser = gtk_file_chooser_native_new ("Open File", window,
+                                                   action, "_Open", "_Cancel");
 
-    res = gtk_native_dialog_run (GTK_NATIVE_DIALOG (fileChooser));
-    if (res == GTK_RESPONSE_ACCEPT) {
-        char *filename;
-        GtkFileChooser *chooser = GTK_FILE_CHOOSER (fileChooser);
-        filename = gtk_file_chooser_get_filename (chooser);
-        const char *path = g_strconcat ("file://", filename, NULL);
+        res = gtk_native_dialog_run (GTK_NATIVE_DIALOG (fileChooser));
+        if (res == GTK_RESPONSE_ACCEPT) {
+            isPlaying = TRUE;
 
-        backendPlay (path);
-        createContext (uiWidgets.videoWindow);
+            char *filename;
+            GtkFileChooser *chooser = GTK_FILE_CHOOSER (fileChooser);
+            filename = gtk_file_chooser_get_filename (chooser);
+            const char *path = g_strconcat ("file://", filename, NULL);
 
-        GtkWidget* icon = gtk_image_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
-        gtk_button_set_image (GTK_BUTTON (uiWidgets.playButton), icon);
+            backendPlay (path);
+            createContext (uiWidgets.videoWindow);
 
-        g_signal_connect (G_OBJECT (uiWidgets.playButton), "clicked", G_CALLBACK (play_cb), NULL);
-        g_signal_connect (G_OBJECT (uiWidgets.stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
-        g_signal_connect (G_OBJECT(uiWidgets.fullscreenButton), "clicked", G_CALLBACK (fullscreen_cb), NULL);
-        g_signal_connect (G_OBJECT(uiWidgets.volumeButton), "value-changed", G_CALLBACK (volume_cb), NULL);
-        uiWidgets.sliderUpdateSignalId =
-                g_signal_connect (G_OBJECT (uiWidgets.slider), "value-changed",
-                        G_CALLBACK (slider_cb), NULL);
-        gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), backendGetVolume());
+            GtkWidget* icon = gtk_image_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
+            gtk_button_set_image (GTK_BUTTON (uiWidgets.playButton), icon);
 
-        g_free (filename);
+            g_signal_connect (G_OBJECT (uiWidgets.playButton), "clicked", G_CALLBACK (play_cb), NULL);
+            g_signal_connect (G_OBJECT (uiWidgets.stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
+            g_signal_connect (G_OBJECT(uiWidgets.fullscreenButton), "clicked", G_CALLBACK (fullscreen_cb), NULL);
+            g_signal_connect (G_OBJECT(uiWidgets.volumeButton), "value-changed", G_CALLBACK (volume_cb), NULL);
+            uiWidgets.sliderUpdateSignalId =
+                    g_signal_connect (G_OBJECT (uiWidgets.slider), "value-changed",
+                                      G_CALLBACK (slider_cb), NULL);
+            gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), backendGetVolume());
+
+            g_free (filename);
+        }
+        g_object_unref (fileChooser);
     }
-    g_object_unref (fileChooser);
 }
 
 /* This function is called when the main window is closed */
