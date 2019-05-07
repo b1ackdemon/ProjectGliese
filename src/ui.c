@@ -94,6 +94,7 @@ int createUi              (GtkWidget* window);
 int createMenubar         (Menubar* menubar);
 int createWindow          (const char* name, int width, int height);
 static void createContext (GtkWidget* widget);
+void createAboutDialog();
 
 static void play_cb              (GtkButton* button,       gpointer data);
 static void stop_cb              (GtkButton* button,       gpointer data);
@@ -106,6 +107,7 @@ static void fileMenu_cb          (GtkWidget* widget);
 static void deleteEvent_cb       (GtkWidget* widget, GdkEvent *event, gpointer data);
 static void fullSlider_cb (GtkRange *range, gpointer data);
 static void mouseMovement_cb (GtkWidget* widget, GtkWidget* controls);
+static void aboutMenu_cb (GtkWidget* widget, gpointer data);
 
 int main (int argc, char **argv) {
     gtk_init (&argc, &argv);
@@ -167,6 +169,8 @@ int createUi (GtkWidget* window) {
     gtk_box_pack_start (GTK_BOX (mainBox), uiWidgets.videoWindow, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX (mainBox), controls, FALSE, False, 5);
     gtk_container_add (GTK_CONTAINER (window), mainBox);
+
+
     return 0;
 }
 
@@ -336,6 +340,7 @@ int createHelpMenu (HelpMenu* helpMenu, GtkWidget* menubar) {
 
     helpMenu->helpMi  = gtk_menu_item_new_with_label("Help");
     helpMenu->aboutMi = gtk_menu_item_new_with_label("About");
+    g_signal_connect (helpMenu->aboutMi, "activate", G_CALLBACK (aboutMenu_cb), NULL);
 
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (helpMenu->helpMi),
             helpMenu->helpMenu);
@@ -361,6 +366,17 @@ static void createContext (GtkWidget *widget) {
     window_handle = GDK_WINDOW_XID (window);
 #endif
     backendSetWindow (window_handle);
+}
+
+void createAboutDialog() {
+    GtkWidget* aboutWindow = gtk_about_dialog_new();
+
+    gtk_about_dialog_set_program_name (GTK_ABOUT_DIALOG (aboutWindow), "Project Gliese");
+    gtk_about_dialog_set_version (GTK_ABOUT_DIALOG (aboutWindow), "0.6");
+    gtk_about_dialog_set_license (GTK_ABOUT_DIALOG (aboutWindow), "GPL-3.0");
+    gtk_about_dialog_set_license_type (GTK_ABOUT_DIALOG (aboutWindow), GTK_LICENSE_GPL_3_0_ONLY);
+
+    gtk_widget_show_all (aboutWindow);
 }
 
 static void play_cb (GtkButton *button, gpointer data) {
@@ -501,6 +517,10 @@ static void fileMenu_cb (GtkWidget *widget) {
         }
         g_object_unref (fileChooser);
     }
+}
+
+static void aboutMenu_cb (GtkWidget* widget, gpointer data) {
+    createAboutDialog();
 }
 
 /* This function is called when the main window is closed */

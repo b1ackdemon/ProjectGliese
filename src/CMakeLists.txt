@@ -14,5 +14,5 @@ pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 add_executable(ProjectGliese ui.c gst-backend.c gst-backend.h ui.h)
 
 target_link_libraries(ProjectGliese ${GST_LIBRARIES} ${GTK3_LIBRARIES})
-target_include_directories(ProjectGliese PRIVATE ${GST_INCLUDE_DIRS} ${GTK3_INCLUDE_DIRS})
-target_compile_options(ProjectGliese PRIVATE ${GST_CFLAGS} ${GTK3_CFLAGS})
+target_include_directories(ProjectGliese PUBLIC ${GST_INCLUDE_DIRS} ${GTK3_INCLUDE_DIRS})
+target_compile_options(ProjectGliese PUBLIC ${GST_CFLAGS} ${GTK3_CFLAGS})
