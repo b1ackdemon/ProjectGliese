@@ -10,37 +10,48 @@ typedef struct _CustomData {
 } CustomData;
 
 static GstElement* pipeline;
+static GstElement* sink;
 static CustomData data;
 
 static void eos_cb (GstBus* bus, GstMessage* msg, CustomData* data);
 static void error_cb (GstBus* bus, GstMessage* msg, CustomData* data);
-static void state_changed_cb (GstBus* bus, GstMessage* msg, CustomData* data);
+static void stateChanged_cb(GstBus *bus, GstMessage *msg, CustomData *data);
+static void padAdded_cb (GstElement* dec, GstPad* pad, gpointer data);
 
 void backendInit (int* argc, char*** argv){
     gst_init (argc, argv);
 }
 
 int backendSetWindow (guintptr window) {
-    gst_video_overlay_set_window_handle (GST_VIDEO_OVERLAY (pipeline), window);
+    gst_video_overlay_set_window_handle (GST_VIDEO_OVERLAY (sink), window);
     return 0;
 }
 
 int backendPlay (const gchar *filename) {
+    GstElement* dec;
     GstBus* bus;
 
     data.duration = GST_CLOCK_TIME_NONE;
-    pipeline = gst_element_factory_make ("playbin", "playbin");
-    if (!pipeline) {
+    pipeline = gst_pipeline_new ("pipeline");
+    dec = gst_element_factory_make ("uridecodebin", "source");
+    if (!pipeline && !dec) {
         g_printerr ("Not all elements could be created.\n");
         return -1;
     }
-    g_object_set (pipeline, "uri", filename, NULL);
+
+    g_object_set (dec, "uri", filename, NULL);
+    g_signal_connect (dec, "pad-added", G_CALLBACK (padAdded_cb), NULL);
+
+    sink = gst_element_factory_make ("playsink", "sink");
+    gst_util_set_object_arg (G_OBJECT (sink), "flags",
+            "soft-colorbalance+soft-volume+vis+text+audio+video");
+    gst_bin_add_many (GST_BIN (pipeline), dec, sink, NULL);
 
     bus = gst_element_get_bus (pipeline);
     gst_bus_add_signal_watch (bus);
     g_signal_connect (G_OBJECT (bus), "message::error", (GCallback) error_cb, &data);
     g_signal_connect (G_OBJECT (bus), "message::eos", (GCallback) eos_cb, &data);
-    g_signal_connect (G_OBJECT (bus), "message::state-changed", (GCallback) state_changed_cb, &data);
+    g_signal_connect (G_OBJECT (bus), "message::state-changed", (GCallback) stateChanged_cb, &data);
     gst_object_unref (bus);
 
     data.ret = gst_element_set_state (pipeline, GST_STATE_PLAYING);
@@ -108,12 +119,12 @@ void backendSeek (gdouble value) {
 }
 
 void backendSetVolume (gdouble volume) {
-    g_object_set(pipeline, "volume", volume, NULL);
+    g_object_set(sink, "volume", volume, NULL);
 }
 
 gdouble backendGetVolume() {
     gdouble value = 0;
-    g_object_get(pipeline, "volume", &value, NULL);
+    g_object_get(sink, "volume", &value, NULL);
     return value;
 }
 
@@ -146,7 +157,7 @@ static void error_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
 
 /* This function is called when the pipeline changes states. We use it to
  * keep track of the current state. */
-static void state_changed_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
+static void stateChanged_cb(GstBus *bus, GstMessage *msg, CustomData *data) {
     GstState old_state, new_state, pending_state;
     gst_message_parse_state_changed (msg, &old_state, &new_state, &pending_state);
     if (GST_MESSAGE_SRC (msg) == GST_OBJECT (pipeline)) {
@@ -156,5 +167,42 @@ static void state_changed_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
             /* For extra responsiveness, we refresh the GUI as soon as we reach the PAUSED state */
             refreshUi();
         }
+    }
+}
+
+static void padAdded_cb (GstElement* dec, GstPad* pad, gpointer data) {
+    GstCaps* caps;
+    GstStructure* structure;
+    const gchar* name;
+    GstPadTemplate* template;
+    GstElementClass* class;
+
+    /* check media type */
+    caps = gst_pad_query_caps (pad, NULL);
+    structure = gst_caps_get_structure (caps, 0);
+    name = gst_structure_get_name (structure);
+
+    class = GST_ELEMENT_GET_CLASS (sink);
+
+    if (g_str_has_prefix (name, "audio")) {
+        template = gst_element_class_get_pad_template (class, "audio_sink");
+    } else if (g_str_has_prefix (name, "video")) {
+        template = gst_element_class_get_pad_template (class, "video_sink");
+    } else if (g_str_has_prefix (name, "text")) {
+        template = gst_element_class_get_pad_template (class, "text_sink");
+    } else {
+        template = NULL;
+    }
+
+    if (template) {
+        GstPad* sinkpad;
+
+        sinkpad = gst_element_request_pad (sink, template, NULL, NULL);
+
+        if (!gst_pad_is_linked (sinkpad)) {
+            gst_pad_link (pad, sinkpad);
+        }
+
+        gst_object_unref (sinkpad);
     }
 }
