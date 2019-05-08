@@ -106,7 +106,6 @@ static void overlayFullscreen_cb (GtkWidget* widget,       GtkWindow* mainWindow
 static void fileMenu_cb          (GtkWidget* widget);
 static void deleteEvent_cb       (GtkWidget* widget, GdkEvent *event, gpointer data);
 static void fullSlider_cb (GtkRange *range, gpointer data);
-static void mouseMovement_cb (GtkWidget* widget, GtkWidget* controls);
 static void aboutMenu_cb (GtkWidget* widget, gpointer data);
 
 int main (int argc, char **argv) {
@@ -419,7 +418,6 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
     gtk_window_set_title (GTK_WINDOW (fullscreenWindow), "ProjectGliese");
     GtkWidget* rootPane = gtk_overlay_new();
     gtk_container_add (GTK_CONTAINER (fullscreenWindow), rootPane);
-    g_signal_connect (G_OBJECT (fullscreenWindow), "motion_notify_event", G_CALLBACK (mouseMovement_cb), NULL);
 
     GtkWidget* videoWindow = gtk_drawing_area_new();
     gtk_container_add (GTK_CONTAINER (rootPane), videoWindow);
@@ -460,9 +458,6 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
     gtk_widget_hide (GTK_WIDGET (parentWindow));
 }
 
-static void mouseMovement_cb (GtkWidget* widget, GtkWidget* controls) {
-    g_print("mouse has moved\n");
-}
 
 static void overlayFullscreen_cb (GtkWidget* widget, GtkWindow* mainWindow) {
     fullscreenSlider = NULL;
