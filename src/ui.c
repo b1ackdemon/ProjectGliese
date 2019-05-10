@@ -42,7 +42,7 @@ typedef struct _SubtitlesMenu {
 typedef struct _ViewMenu {
     GtkWidget* viewMenu;
     GtkWidget* viewMi;
-    GtkWidget* informationAndPropertiesMi;
+    GtkWidget* informationMi;
 } ViewMenu;
 
 typedef struct _OptionsMenu {
@@ -90,11 +90,12 @@ int createSubtitlesMenu   (SubtitlesMenu* subtitlesMenu, GtkWidget* menubar);
 int createViewMenu        (ViewMenu* viewMenu,           GtkWidget* menubar);
 int createOptionsMenu     (OptionsMenu* optionsMenu,     GtkWidget* menubar);
 int createHelpMenu        (HelpMenu* helpMenu,           GtkWidget* menubar);
-int createUi              (GtkWidget* window);
-int createMenubar         (Menubar* menubar);
-int createWindow          (const char* name, int width, int height);
+int createUi (GtkWidget* window);
+int createMenubar (Menubar* menubar);
+int createWindow (const char* name, int width, int height);
 static void createContext (GtkWidget* widget);
 void createAboutDialog();
+void createInformationWindow();
 
 static void play_cb              (GtkButton* button,       gpointer data);
 static void stop_cb              (GtkButton* button,       gpointer data);
@@ -102,11 +103,12 @@ static void slider_cb            (GtkRange*  range,        gpointer data);
 static void volume_cb            (GtkRange*  volumeButton, gpointer data);
 static void fullscreen_cb        (GtkWidget* button,       gpointer data);
 static void fullscreenRealize_cb (GtkWidget* widget,       gpointer data);
-static void overlayFullscreen_cb (GtkWidget* widget,       GtkWindow* mainWindow);
-static void fileMenu_cb          (GtkWidget* widget);
-static void deleteEvent_cb       (GtkWidget* widget, GdkEvent *event, gpointer data);
+static void overlayFullscreen_cb (GtkWidget* widget, GtkWindow* mainWindow);
+static void fileMenu_cb (GtkWidget* widget);
+static void deleteEvent_cb (GtkWidget* widget, GdkEvent *event, gpointer data);
 static void fullSlider_cb (GtkRange *range, gpointer data);
 static void aboutMenu_cb (GtkWidget* widget, gpointer data);
+static void informationMenu_cb (GtkWidget* widget, gpointer data);
 
 int main (int argc, char **argv) {
     gtk_init (&argc, &argv);
@@ -166,7 +168,7 @@ int createUi (GtkWidget* window) {
     mainBox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_pack_start (GTK_BOX (mainBox), menubar.menubar, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (mainBox), uiWidgets.videoWindow, TRUE, TRUE, 0);
-    gtk_box_pack_start (GTK_BOX (mainBox), controls, FALSE, False, 5);
+    gtk_box_pack_start (GTK_BOX (mainBox), controls, FALSE, FALSE, 5);
     gtk_container_add (GTK_CONTAINER (window), mainBox);
 
 
@@ -306,13 +308,15 @@ int createViewMenu (ViewMenu* viewMenu, GtkWidget* menubar) {
     viewMenu->viewMenu = gtk_menu_new();
 
     viewMenu->viewMi   = gtk_menu_item_new_with_label ("View");
-    viewMenu->informationAndPropertiesMi =
+    viewMenu->informationMi =
             gtk_menu_item_new_with_label ("Information and properties");
+    g_signal_connect (viewMenu->informationMi,
+            "activate", G_CALLBACK(informationMenu_cb), NULL);
 
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (viewMenu->viewMi),
             viewMenu->viewMenu);
     gtk_menu_shell_append (GTK_MENU_SHELL (viewMenu->viewMenu),
-            viewMenu->informationAndPropertiesMi);
+            viewMenu->informationMi);
     gtk_menu_shell_append (GTK_MENU_SHELL (menubar), viewMenu->viewMi);
     return 0;
 }
@@ -367,11 +371,30 @@ static void createContext (GtkWidget *widget) {
     backendSetWindow (window_handle);
 }
 
+void createInformationWindow() {
+    if (isPlaying) {
+        GtkWidget* informationWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+        gtk_window_set_position (GTK_WINDOW (informationWindow), GTK_WIN_POS_CENTER);
+        gtk_window_set_title (GTK_WINDOW (informationWindow), "File properties");
+        gtk_window_set_modal (GTK_WINDOW (informationWindow), TRUE);
+        gtk_window_set_default_size (GTK_WINDOW (informationWindow), 400, 300);
+
+        GtkTextBuffer* textBuffer = gtk_text_buffer_new (NULL);
+        backendGetInformationAboutStreams(textBuffer);
+
+        GtkWidget* textView = gtk_text_view_new_with_buffer (textBuffer);
+        gtk_text_view_set_editable (GTK_TEXT_VIEW (textView), FALSE);
+        gtk_container_add (GTK_CONTAINER (informationWindow), textView);
+
+        gtk_widget_show_all (informationWindow);
+    }
+}
+
 void createAboutDialog() {
     GtkWidget* aboutWindow = gtk_about_dialog_new();
 
     gtk_about_dialog_set_program_name (GTK_ABOUT_DIALOG (aboutWindow), "Project Gliese");
-    gtk_about_dialog_set_version (GTK_ABOUT_DIALOG (aboutWindow), "0.6");
+    gtk_about_dialog_set_version (GTK_ABOUT_DIALOG (aboutWindow), "0.1");
     gtk_about_dialog_set_license (GTK_ABOUT_DIALOG (aboutWindow), "GPL-3.0");
     gtk_about_dialog_set_license_type (GTK_ABOUT_DIALOG (aboutWindow), GTK_LICENSE_GPL_3_0_ONLY);
 
@@ -496,7 +519,7 @@ static void fileMenu_cb (GtkWidget *widget) {
             backendPlay (path);
             createContext (uiWidgets.videoWindow);
 
-            GtkWidget* icon = gtk_image_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
+            GtkWidget* icon = gtk_image_new_from_icon_name ("media-playback-pause", GTK_ICON_SIZE_BUTTON);
             gtk_button_set_image (GTK_BUTTON (uiWidgets.playButton), icon);
 
             g_signal_connect (G_OBJECT (uiWidgets.playButton), "clicked", G_CALLBACK (play_cb), NULL);
@@ -516,6 +539,10 @@ static void fileMenu_cb (GtkWidget *widget) {
 
 static void aboutMenu_cb (GtkWidget* widget, gpointer data) {
     createAboutDialog();
+}
+
+static void informationMenu_cb (GtkWidget* widget, gpointer data) {
+    createInformationWindow();
 }
 
 /* This function is called when the main window is closed */

@@ -9,6 +9,7 @@ void backendStop();
 void backendResume();
 void backendSeek (gdouble value);
 void backendSetVolume (gdouble volume);
+void backendGetInformationAboutStreams(GtkTextBuffer *textBuffer);
 gdouble backendQueryDuration();
 gdouble backendGetVolume();
 gboolean backendQueryPosition (gdouble* current);

@@ -1,5 +1,6 @@
 #include <gst/gst.h>
 #include <gst/video/videooverlay.h>
+#include <gtk/gtk.h>
 #include "gst-backend.h"
 #include "ui.h"
 
@@ -10,7 +11,6 @@ typedef struct _CustomData {
 } CustomData;
 
 static GstElement* pipeline;
-static GstElement* sink;
 static CustomData data;
 
 static void eos_cb (GstBus* bus, GstMessage* msg, CustomData* data);
@@ -23,29 +23,25 @@ void backendInit (int* argc, char*** argv){
 }
 
 int backendSetWindow (guintptr window) {
-    gst_video_overlay_set_window_handle (GST_VIDEO_OVERLAY (sink), window);
+    gst_video_overlay_set_window_handle (GST_VIDEO_OVERLAY (pipeline), window);
     return 0;
 }
 
 int backendPlay (const gchar *filename) {
-    GstElement* dec;
     GstBus* bus;
 
     data.duration = GST_CLOCK_TIME_NONE;
-    pipeline = gst_pipeline_new ("pipeline");
-    dec = gst_element_factory_make ("uridecodebin", "source");
-    if (!pipeline && !dec) {
+    pipeline = gst_element_factory_make ("playbin", "playbin");
+    if (!pipeline) {
         g_printerr ("Not all elements could be created.\n");
         return -1;
     }
 
-    g_object_set (dec, "uri", filename, NULL);
-    g_signal_connect (dec, "pad-added", G_CALLBACK (padAdded_cb), NULL);
+    g_object_set (pipeline, "uri", filename, NULL);
+    g_signal_connect (pipeline, "pad-added", G_CALLBACK (padAdded_cb), NULL);
 
-    sink = gst_element_factory_make ("playsink", "sink");
-    gst_util_set_object_arg (G_OBJECT (sink), "flags",
+    gst_util_set_object_arg (G_OBJECT (pipeline), "flags",
             "soft-colorbalance+soft-volume+vis+text+audio+video");
-    gst_bin_add_many (GST_BIN (pipeline), dec, sink, NULL);
 
     bus = gst_element_get_bus (pipeline);
     gst_bus_add_signal_watch (bus);
@@ -119,13 +115,90 @@ void backendSeek (gdouble value) {
 }
 
 void backendSetVolume (gdouble volume) {
-    g_object_set(sink, "volume", volume, NULL);
+    g_object_set(pipeline, "volume", volume, NULL);
 }
 
 gdouble backendGetVolume() {
     gdouble value = 0;
-    g_object_get(sink, "volume", &value, NULL);
+    g_object_get(pipeline, "volume", &value, NULL);
     return value;
+}
+
+void backendGetInformationAboutStreams(GtkTextBuffer *textBuffer) {
+    gint i;
+    GstTagList *tags;
+    gchar *str, *total_str;
+    guint rate;
+    gint n_video, n_audio, n_text;
+
+    /* Read some properties */
+    g_object_get (pipeline, "n-video", &n_video, NULL);
+    g_object_get (pipeline, "n-audio", &n_audio, NULL);
+    g_object_get (pipeline, "n-text", &n_text, NULL);
+
+    for (i = 0; i < n_video; i++) {
+        tags = NULL;
+        /* Retrieve the stream's video tags */
+        g_signal_emit_by_name (pipeline, "get-video-tags", i, &tags);
+        if (tags) {
+            total_str = g_strdup_printf ("video stream %d:\n", i);
+            gtk_text_buffer_insert_at_cursor (textBuffer, total_str, -1);
+            g_free (total_str);
+            gst_tag_list_get_string (tags, GST_TAG_VIDEO_CODEC, &str);
+            total_str = g_strdup_printf ("  codec: %s\n", str ? str : "unknown");
+            gtk_text_buffer_insert_at_cursor (textBuffer, total_str, -1);
+            g_free (total_str);
+            g_free (str);
+            gst_tag_list_free (tags);
+        }
+    }
+
+    for (i = 0; i < n_audio; i++) {
+        tags = NULL;
+        /* Retrieve the stream's audio tags */
+        g_signal_emit_by_name (pipeline, "get-audio-tags", i, &tags);
+        if (tags) {
+            total_str = g_strdup_printf ("\naudio stream %d:\n", i);
+            gtk_text_buffer_insert_at_cursor (textBuffer, total_str, -1);
+            g_free (total_str);
+            if (gst_tag_list_get_string (tags, GST_TAG_AUDIO_CODEC, &str)) {
+                total_str = g_strdup_printf ("  codec: %s\n", str);
+                gtk_text_buffer_insert_at_cursor (textBuffer, total_str, -1);
+                g_free (total_str);
+                g_free (str);
+            }
+            if (gst_tag_list_get_string (tags, GST_TAG_LANGUAGE_CODE, &str)) {
+                total_str = g_strdup_printf ("  language: %s\n", str);
+                gtk_text_buffer_insert_at_cursor (textBuffer, total_str, -1);
+                g_free (total_str);
+                g_free (str);
+            }
+            if (gst_tag_list_get_uint (tags, GST_TAG_BITRATE, &rate)) {
+                total_str = g_strdup_printf ("  bitrate: %d\n", rate);
+                gtk_text_buffer_insert_at_cursor (textBuffer, total_str, -1);
+                g_free (total_str);
+            }
+            gst_tag_list_free (tags);
+        }
+    }
+
+    for (i = 0; i < n_text; i++) {
+        tags = NULL;
+        /* Retrieve the stream's subtitle tags */
+        g_signal_emit_by_name (pipeline, "get-text-tags", i, &tags);
+        if (tags) {
+            total_str = g_strdup_printf ("\nsubtitle stream %d:\n", i);
+            gtk_text_buffer_insert_at_cursor (textBuffer, total_str, -1);
+            g_free (total_str);
+            if (gst_tag_list_get_string (tags, GST_TAG_LANGUAGE_CODE, &str)) {
+                total_str = g_strdup_printf ("  language: %s\n", str);
+                gtk_text_buffer_insert_at_cursor (textBuffer, total_str, -1);
+                g_free (total_str);
+                g_free (str);
+            }
+            gst_tag_list_free (tags);
+        }
+    }
 }
 
 void backendDeInit() {
@@ -182,7 +255,7 @@ static void padAdded_cb (GstElement* dec, GstPad* pad, gpointer data) {
     structure = gst_caps_get_structure (caps, 0);
     name = gst_structure_get_name (structure);
 
-    class = GST_ELEMENT_GET_CLASS (sink);
+    class = GST_ELEMENT_GET_CLASS (pipeline);
 
     if (g_str_has_prefix (name, "audio")) {
         template = gst_element_class_get_pad_template (class, "audio_sink");
@@ -197,7 +270,7 @@ static void padAdded_cb (GstElement* dec, GstPad* pad, gpointer data) {
     if (template) {
         GstPad* sinkpad;
 
-        sinkpad = gst_element_request_pad (sink, template, NULL, NULL);
+        sinkpad = gst_element_request_pad (pipeline, template, NULL, NULL);
 
         if (!gst_pad_is_linked (sinkpad)) {
             gst_pad_link (pad, sinkpad);
