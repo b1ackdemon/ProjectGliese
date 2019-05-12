@@ -1,6 +1,7 @@
 #include <gst/gst.h>
 #include <gst/video/videooverlay.h>
 #include <gtk/gtk.h>
+#include <glib/gprintf.h>
 #include "gst-backend.h"
 #include "ui.h"
 
@@ -78,6 +79,24 @@ gboolean backendQueryPosition (gdouble* current) {
     g_print ("Position %" GST_TIME_FORMAT " / %" GST_TIME_FORMAT "\r\n",
              GST_TIME_ARGS (cur), GST_TIME_ARGS (data.duration));
     return res;
+}
+
+void backendGetDuration (gchar* str) {
+    gdouble duration = backendQueryDuration();
+    duration *= GST_SECOND;
+
+    g_sprintf (str, "%u:%02u:%02u", GST_TIME_ARGS (duration));
+}
+
+void backendGetPosition (gchar* str) {
+    gdouble position;
+
+    if (!backendQueryPosition (&position)) {
+        g_sprintf (str, "-:--:--");
+        return;
+    }
+
+    g_sprintf (str, "%u:%02u:%02u", GST_TIME_ARGS (position * GST_SECOND));
 }
 
 gboolean backendDurationIsValid() {
