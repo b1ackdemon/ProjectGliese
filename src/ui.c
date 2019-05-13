@@ -486,8 +486,14 @@ void createAboutDialog() {
 
     gtk_about_dialog_set_program_name (GTK_ABOUT_DIALOG (aboutWindow), "Project Gliese");
     gtk_about_dialog_set_version (GTK_ABOUT_DIALOG (aboutWindow), "0.14159265358979");
+
     gtk_about_dialog_set_license (GTK_ABOUT_DIALOG (aboutWindow), "GPL-3.0");
     gtk_about_dialog_set_license_type (GTK_ABOUT_DIALOG (aboutWindow), GTK_LICENSE_GPL_3_0_ONLY);
+
+    gtk_about_dialog_set_website (GTK_ABOUT_DIALOG (aboutWindow), "https://github.com/b1ackdemon/projectGliese");
+    gtk_about_dialog_set_website_label (GTK_ABOUT_DIALOG (aboutWindow), "Github");
+
+    gtk_about_dialog_set_comments (GTK_ABOUT_DIALOG (aboutWindow), "A simple media player.");
 
     gtk_widget_show_all (aboutWindow);
 }
