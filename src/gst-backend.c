@@ -1,5 +1,6 @@
 #include <gst/gst.h>
 #include <gst/video/videooverlay.h>
+#include <gst/video/colorbalance.h>
 #include <gtk/gtk.h>
 #include <glib/gprintf.h>
 #include "gst-backend.h"

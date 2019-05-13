@@ -24,6 +24,7 @@ typedef struct _VideoMenu {
     GtkWidget* videoMenu;
     GtkWidget* videoMi;
     GtkWidget* trackMi;
+    GtkWidget* colorBalanceMi;
 } VideoMenu;
 
 typedef struct _AudioMenu {
@@ -104,6 +105,7 @@ int createWindow (const char* name, int width, int height);
 static void createContext (GtkWidget* widget);
 void createAboutDialog();
 void createInformationWindow();
+void createColorBalanceWindow();
 void refreshPositionLabel (GtkWidget* positionLabel);
 void refreshDurationLabel (GtkWidget* durationLabel);
 
@@ -119,6 +121,7 @@ static void deleteEvent_cb (GtkWidget* widget, GdkEvent *event, gpointer data);
 static void fullSlider_cb (GtkRange *range, gpointer data);
 static void aboutMenu_cb (GtkWidget* widget, gpointer data);
 static void informationMenu_cb (GtkWidget* widget, gpointer data);
+static void colorBalanceMenu_cb (GtkWidget* widget, gpointer data);
 
 int main (int argc, char **argv) {
     gtk_init (&argc, &argv);
@@ -131,7 +134,7 @@ int main (int argc, char **argv) {
 
     g_timeout_add_seconds (1, (GSourceFunc) refreshUi, NULL);
 
-    /* Start the GTK mail loop. */
+    /* Start the GTK main loop. */
     gtk_main();
 
     if (isPlaying) {
@@ -276,17 +279,24 @@ int createOpenMenu (OpenMenu* openMenu, GtkWidget* menubar) {
 }
 
 int createVideoMenu (VideoMenu* videoMenu, GtkWidget* menubar) {
-    videoMenu->videoMenu    = gtk_menu_new();
+    videoMenu->videoMenu      = gtk_menu_new();
 
-    videoMenu->videoMi      =
+    videoMenu->videoMi        =
             gtk_menu_item_new_with_label ("Video");
-    videoMenu->trackMi      =
+    videoMenu->trackMi        =
             gtk_menu_item_new_with_label ("Track");
+
+    videoMenu->colorBalanceMi =
+            gtk_menu_item_new_with_label ("Color balance");
+    g_signal_connect (videoMenu->colorBalanceMi,
+                      "activate", G_CALLBACK(colorBalanceMenu_cb), NULL);
 
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (videoMenu->videoMi),
             videoMenu->videoMenu);
     gtk_menu_shell_append (GTK_MENU_SHELL (videoMenu->videoMenu),
             videoMenu->trackMi);
+    gtk_menu_shell_append (GTK_MENU_SHELL (videoMenu->videoMenu),
+                           videoMenu->colorBalanceMi);
     gtk_menu_shell_append (GTK_MENU_SHELL (menubar), videoMenu->videoMi);
     return 0;
 }
@@ -412,6 +422,62 @@ void createInformationWindow() {
         gtk_container_add (GTK_CONTAINER (informationWindow), textView);
 
         gtk_widget_show_all (informationWindow);
+    }
+}
+
+void createColorBalanceWindow() {
+    if (!isPlaying) {
+        GtkWidget* colBalWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+        gtk_window_set_position (GTK_WINDOW (colBalWindow), GTK_WIN_POS_CENTER);
+        gtk_window_set_title (GTK_WINDOW (colBalWindow), "Color balance");
+        gtk_window_set_modal (GTK_WINDOW (colBalWindow), TRUE);
+        gtk_window_set_default_size (GTK_WINDOW (colBalWindow), 500, 400);
+
+        GtkWidget* contrastLabel = gtk_label_new ("Contrast");
+
+        GtkWidget* contrastSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
+        gtk_scale_set_draw_value (GTK_SCALE (contrastSlider), 0);
+
+        GtkWidget* brightnessLabel = gtk_label_new ("Brightness");
+
+        GtkWidget* brightnessSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
+        gtk_scale_set_draw_value (GTK_SCALE (brightnessSlider), 0);
+
+        GtkWidget* hueLabel = gtk_label_new ("Hue");
+
+        GtkWidget* hueSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
+        gtk_scale_set_draw_value (GTK_SCALE (hueSlider), 0);
+
+        GtkWidget* saturationLabel = gtk_label_new ("Saturation");
+
+        GtkWidget* saturationSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
+        gtk_scale_set_draw_value (GTK_SCALE (saturationSlider), 0);
+
+        GtkWidget* contrastBox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+        gtk_box_pack_start (GTK_BOX (contrastBox), contrastLabel, FALSE, FALSE, 0);
+        gtk_box_pack_start (GTK_BOX (contrastBox), contrastSlider, TRUE, TRUE, 20);
+
+
+        GtkWidget* brightnessBox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+        gtk_box_pack_start (GTK_BOX (brightnessBox), brightnessLabel, FALSE, FALSE, 0);
+        gtk_box_pack_start (GTK_BOX (brightnessBox), brightnessSlider, TRUE, TRUE, 20);
+
+        GtkWidget* hueBox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+        gtk_box_pack_start (GTK_BOX (hueBox), hueLabel, FALSE, FALSE, 0);
+        gtk_box_pack_start (GTK_BOX (hueBox), hueSlider, TRUE, TRUE, 20);
+
+        GtkWidget* saturationBox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+        gtk_box_pack_start (GTK_BOX (saturationBox), saturationLabel, FALSE, FALSE, 0);
+        gtk_box_pack_start (GTK_BOX (saturationBox), saturationSlider, TRUE, TRUE, 20);
+
+        GtkWidget* mainBox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+        gtk_box_pack_start (GTK_BOX (mainBox), contrastBox, FALSE, FALSE, 0);
+        gtk_box_pack_start (GTK_BOX (mainBox), brightnessBox, FALSE, FALSE, 0);
+        gtk_box_pack_start (GTK_BOX (mainBox), hueBox, FALSE, FALSE, 0);
+        gtk_box_pack_start (GTK_BOX (mainBox), saturationBox, FALSE, FALSE, 0);
+        gtk_container_add (GTK_CONTAINER (colBalWindow), mainBox);
+        gtk_container_set_border_width (GTK_CONTAINER(colBalWindow), 30);
+        gtk_widget_show_all (colBalWindow);
     }
 }
 
@@ -592,6 +658,10 @@ static void aboutMenu_cb (GtkWidget* widget, gpointer data) {
 
 static void informationMenu_cb (GtkWidget* widget, gpointer data) {
     createInformationWindow();
+}
+
+static void colorBalanceMenu_cb (GtkWidget* widget, gpointer data) {
+    createColorBalanceWindow();
 }
 
 /* This function is called when the main window is closed */
