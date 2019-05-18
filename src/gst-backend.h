@@ -12,6 +12,8 @@ void backendSetVolume (gdouble volume);
 void backendGetInformationAboutStreams(GtkTextBuffer *textBuffer);
 void backendGetDuration (gchar* str);
 void backendGetPosition (gchar* str);
+void backendGetColorBalance (gchar* channelName, gdouble* value);
+void backendSetColorBalance (gchar* channelName, gdouble value);
 gdouble backendQueryDuration();
 gdouble backendGetVolume();
 gboolean backendQueryPosition (gdouble* current);

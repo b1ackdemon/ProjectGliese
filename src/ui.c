@@ -122,6 +122,10 @@ static void fullSlider_cb (GtkRange *range, gpointer data);
 static void aboutMenu_cb (GtkWidget* widget, gpointer data);
 static void informationMenu_cb (GtkWidget* widget, gpointer data);
 static void colorBalanceMenu_cb (GtkWidget* widget, gpointer data);
+static void contrast_cb (GtkRange* range, gpointer data);
+static void brightness_cb (GtkRange* range, gpointer data);
+static void saturation_cb (GtkRange* range, gpointer data);
+static void hue_cb (GtkRange* range, gpointer data);
 
 int main (int argc, char **argv) {
     gtk_init (&argc, &argv);
@@ -426,7 +430,7 @@ void createInformationWindow() {
 }
 
 void createColorBalanceWindow() {
-    if (!isPlaying) {
+    if (isPlaying) {
         GtkWidget* colBalWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
         gtk_window_set_position (GTK_WINDOW (colBalWindow), GTK_WIN_POS_CENTER);
         gtk_window_set_title (GTK_WINDOW (colBalWindow), "Color balance");
@@ -435,23 +439,43 @@ void createColorBalanceWindow() {
 
         GtkWidget* contrastLabel = gtk_label_new ("Contrast");
 
-        GtkWidget* contrastSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
-        gtk_scale_set_draw_value (GTK_SCALE (contrastSlider), 0);
+        GtkWidget* contrastSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, -1000, 1000, 1);
+        g_signal_connect (G_OBJECT (contrastSlider), "value-changed",
+                          G_CALLBACK (contrast_cb), NULL);
+
+        gdouble contrastValue;
+        backendGetColorBalance ("CONTRAST", &contrastValue);
+        gtk_range_set_value (GTK_RANGE (contrastSlider), contrastValue);
 
         GtkWidget* brightnessLabel = gtk_label_new ("Brightness");
 
-        GtkWidget* brightnessSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
-        gtk_scale_set_draw_value (GTK_SCALE (brightnessSlider), 0);
+        GtkWidget* brightnessSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, -1000, 1000, 1);
+        g_signal_connect (G_OBJECT (brightnessSlider), "value-changed",
+                          G_CALLBACK (brightness_cb), NULL);
+
+        gdouble brightnessValue;
+        backendGetColorBalance ("BRIGHTNESS", &brightnessValue);
+        gtk_range_set_value (GTK_RANGE (brightnessSlider), brightnessValue);
 
         GtkWidget* hueLabel = gtk_label_new ("Hue");
 
-        GtkWidget* hueSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
-        gtk_scale_set_draw_value (GTK_SCALE (hueSlider), 0);
+        GtkWidget* hueSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, -1000, 1000, 1);
+        g_signal_connect (G_OBJECT (hueSlider), "value-changed",
+                          G_CALLBACK (hue_cb), NULL);
+
+        gdouble hueValue;
+        backendGetColorBalance ("HUE", &hueValue);
+        gtk_range_set_value (GTK_RANGE (hueSlider), hueValue);
 
         GtkWidget* saturationLabel = gtk_label_new ("Saturation");
 
-        GtkWidget* saturationSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
-        gtk_scale_set_draw_value (GTK_SCALE (saturationSlider), 0);
+        GtkWidget* saturationSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, -1000, 1000, 1);
+        g_signal_connect (G_OBJECT (saturationSlider), "value-changed",
+                          G_CALLBACK (saturation_cb), NULL);
+
+        gdouble saturationValue;
+        backendGetColorBalance ("SATURATION", &saturationValue);
+        gtk_range_set_value (GTK_RANGE (saturationSlider), saturationValue);
 
         GtkWidget* contrastBox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
         gtk_box_pack_start (GTK_BOX (contrastBox), contrastLabel, FALSE, FALSE, 0);
@@ -668,6 +692,26 @@ static void informationMenu_cb (GtkWidget* widget, gpointer data) {
 
 static void colorBalanceMenu_cb (GtkWidget* widget, gpointer data) {
     createColorBalanceWindow();
+}
+
+static void contrast_cb (GtkRange* range, gpointer data) {
+    gdouble value = gtk_range_get_value (GTK_RANGE (range));
+    backendSetColorBalance ("CONTRAST", value);
+}
+
+static void brightness_cb (GtkRange* range, gpointer data) {
+    gdouble value = gtk_range_get_value (GTK_RANGE (range));
+    backendSetColorBalance ("BRIGHTNESS", value);
+}
+
+static void saturation_cb (GtkRange* range, gpointer data) {
+    gdouble value = gtk_range_get_value (GTK_RANGE (range));
+    backendSetColorBalance ("SATURATION", value);
+}
+
+static void hue_cb (GtkRange* range, gpointer data) {
+    gdouble value = gtk_range_get_value (GTK_RANGE (range));
+    backendSetColorBalance ("HUE", value);
 }
 
 /* This function is called when the main window is closed */

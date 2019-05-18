@@ -221,6 +221,48 @@ void backendGetInformationAboutStreams(GtkTextBuffer *textBuffer) {
     }
 }
 
+void backendGetColorBalance (gchar* channelName, gdouble* value) {
+    GstColorBalance* colorBalance = GST_COLOR_BALANCE(pipeline);
+    GstColorBalanceChannel* channel = NULL;
+    const GList* channels, *l;
+
+    channels = gst_color_balance_list_channels (colorBalance);
+    for (l = channels; l != NULL; l = l->next) {
+        GstColorBalanceChannel* tmp = (GstColorBalanceChannel*) l->data;
+
+        if (g_strrstr (tmp->label, channelName)) {
+            channel = tmp;
+            break;
+        }
+    }
+
+    if (!channel) {
+        return;
+    }
+    *value = gst_color_balance_get_value (colorBalance, channel);
+}
+
+void backendSetColorBalance (gchar* channelName, const gdouble value) {
+    GstColorBalance* colorBalance = GST_COLOR_BALANCE (pipeline);
+    GstColorBalanceChannel* channel = NULL;
+    const GList* channels, *l;
+
+    channels = gst_color_balance_list_channels (colorBalance);
+    for (l = channels; l != NULL; l = l->next) {
+        GstColorBalanceChannel* tmp = (GstColorBalanceChannel*) l->data;
+
+        if (g_strrstr (tmp->label, channelName)) {
+            channel = tmp;
+            break;
+        }
+    }
+
+    if(!channel) {
+        return;
+    }
+    gst_color_balance_set_value (colorBalance, channel, (gint) value);
+}
+
 void backendDeInit() {
     gst_element_set_state (pipeline, GST_STATE_NULL);
     gst_object_unref (pipeline);
@@ -257,7 +299,6 @@ static void stateChanged_cb(GstBus *bus, GstMessage *msg, CustomData *data) {
         data->state = new_state;
         g_print ("State set to %s\n", gst_element_state_get_name (new_state));
         if (old_state == GST_STATE_READY && new_state == GST_STATE_PAUSED) {
-            /* For extra responsiveness, we refresh the GUI as soon as we reach the PAUSED state */
             refreshUi();
         }
     }
