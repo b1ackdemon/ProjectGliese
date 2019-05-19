@@ -108,6 +108,7 @@ void createInformationWindow();
 void createColorBalanceWindow();
 void refreshPositionLabel (GtkWidget* positionLabel);
 void refreshDurationLabel (GtkWidget* durationLabel);
+void hideControls (GtkWidget* controls);
 
 static void play_cb              (GtkButton* button,       gpointer data);
 static void stop_cb              (GtkButton* button,       gpointer data);
@@ -119,6 +120,7 @@ static void overlayFullscreen_cb (GtkWidget* widget, GtkWindow* mainWindow);
 static void fileMenu_cb (GtkWidget* widget);
 static void deleteEvent_cb (GtkWidget* widget, GdkEvent *event, gpointer data);
 static void fullSlider_cb (GtkRange *range, gpointer data);
+static void motionNotify_cb (GtkWidget* widget, gpointer data);
 static void aboutMenu_cb (GtkWidget* widget, gpointer data);
 static void informationMenu_cb (GtkWidget* widget, gpointer data);
 static void colorBalanceMenu_cb (GtkWidget* widget, gpointer data);
@@ -540,6 +542,10 @@ void refreshDurationLabel (GtkWidget* durationLabel) {
     g_free (durationText);
 }
 
+void hideControls (GtkWidget* controls) {
+    //TODO
+}
+
 static void play_cb (GtkButton *button, gpointer data) {
     if (!backendIsPlaying()) {
         GtkWidget* icon = gtk_image_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
@@ -584,6 +590,7 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
     GtkWidget* videoWindow = gtk_drawing_area_new();
     gtk_container_add (GTK_CONTAINER (rootPane), videoWindow);
     g_signal_connect (G_OBJECT (videoWindow), "realize", G_CALLBACK (fullscreenRealize_cb), NULL);
+    gtk_widget_add_events (videoWindow, GDK_POINTER_MOTION_MASK);
 
     GtkWidget* playButton  = gtk_button_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
     g_signal_connect (G_OBJECT (playButton), "clicked", G_CALLBACK (play_cb), NULL);
@@ -621,11 +628,17 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
     gtk_widget_set_valign (controls, GTK_ALIGN_END);
 
     gtk_widget_show_all (fullscreenWindow);
-    gtk_window_fullscreen (GTK_WINDOW (fullscreenWindow));
+    //    gtk_window_fullscreen (GTK_WINDOW (fullscreenWindow));
+
+    g_signal_connect (G_OBJECT (videoWindow), "motion-notify-event", G_CALLBACK(motionNotify_cb), controls);
 
     gtk_widget_hide (GTK_WIDGET (parentWindow));
 }
 
+static void motionNotify_cb (GtkWidget* widget, gpointer data) {
+    g_print("action\n");
+
+}
 
 static void overlayFullscreen_cb (GtkWidget* widget, GtkWindow* mainWindow) {
     fullUiWidgets.fullscreenSlider = NULL;
