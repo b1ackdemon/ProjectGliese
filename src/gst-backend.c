@@ -29,7 +29,7 @@ int backendSetWindow (guintptr window) {
     return 0;
 }
 
-int backendPlay (const gchar *filename) {
+int backendPlay (const gchar* filename) {
     GstBus* bus;
 
     data.duration = GST_CLOCK_TIME_NONE;
@@ -59,6 +59,12 @@ int backendPlay (const gchar *filename) {
         return -1;
     }
     return 0;
+}
+
+void backendChangeUri (const gchar* filename) {
+    backendStop();
+    g_object_set (pipeline, "uri", filename, NULL);
+    backendResume();
 }
 
 gdouble backendQueryDuration() {

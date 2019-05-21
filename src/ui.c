@@ -715,6 +715,32 @@ static void fileMenu_cb (GtkWidget *widget) {
             g_free (filename);
         }
         g_object_unref (fileChooser);
+    } else {
+        GtkFileChooserNative *fileChooser;
+        GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
+        GtkWindow *window = GTK_WINDOW (gtk_widget_get_toplevel(widget));
+        int res;
+
+        fileChooser = gtk_file_chooser_native_new ("Open File", window,
+                                                   action, "_Open", "_Cancel");
+
+        res = gtk_native_dialog_run (GTK_NATIVE_DIALOG (fileChooser));
+        if (res == GTK_RESPONSE_ACCEPT) {
+            isPlaying = TRUE;
+
+            char *filename;
+            GtkFileChooser *chooser = GTK_FILE_CHOOSER (fileChooser);
+            filename = gtk_file_chooser_get_filename (chooser);
+            const char *path = g_strconcat ("file://", filename, NULL);
+
+            backendChangeUri (path);
+            refreshDurationLabel (uiWidgets.duration);
+
+            GtkWidget* icon = gtk_image_new_from_icon_name ("media-playback-pause", GTK_ICON_SIZE_BUTTON);
+            gtk_button_set_image (GTK_BUTTON (uiWidgets.playButton), icon);
+            g_free (filename);
+        }
+        g_object_unref (fileChooser);
     }
 }
 
