@@ -1,6 +1,7 @@
 #include <gtk/gtk.h>
-
 #include <gdk/gdk.h>
+#include <gdk/gdkcursor.h>
+
 #if defined (GDK_WINDOWING_X11)
 #include <gdk/gdkx.h>
 #elif defined (GDK_WINDOWING_WIN32)
@@ -547,7 +548,8 @@ void refreshDurationLabel (GtkWidget* durationLabel) {
 
 void hideControls () {
     GdkWindow* window = gtk_widget_get_parent_window(videoWindow);
-    GdkCursor* watchCursor = gdk_cursor_new(GDK_BLANK_CURSOR);
+    GdkDisplay* display = gdk_display_get_default();
+    GdkCursor* watchCursor = gdk_cursor_new_for_display (display, GDK_BLANK_CURSOR);
     gdk_window_set_cursor(window, watchCursor);
 
     gtk_revealer_set_reveal_child (GTK_REVEALER (revealer), FALSE);
@@ -652,8 +654,9 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
 
 static void motionNotify_cb (GtkWidget* widget, gpointer data) {
     GdkWindow* window = gtk_widget_get_parent_window(videoWindow);
-    GdkCursor* watchCursor = gdk_cursor_new(GDK_LEFT_PTR);
-    gdk_window_set_cursor(window, watchCursor);
+    GdkDisplay* display = gdk_display_get_default();
+    GdkCursor* defaultCursor = gdk_cursor_new_for_display (display, GDK_LEFT_PTR);
+    gdk_window_set_cursor(window, defaultCursor);
 
     gtk_revealer_set_reveal_child (GTK_REVEALER (revealer), TRUE);
     g_signal_handler_block (videoWindow, motionSignalId);
