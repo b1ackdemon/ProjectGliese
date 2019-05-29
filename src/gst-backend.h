@@ -3,14 +3,14 @@
 void backendInit (int* argc, char*** argv);
 void backendDeInit();
 int  backendSetWindow (guintptr window);
-int  backendPlay (const gchar *filename);
+int  backendPlay (const gchar* filename);
 void backendPause();
 void backendStop();
 void backendResume();
 void backendChangeUri (const gchar* filename);
 void backendSeek (gdouble value);
 void backendSetVolume (gdouble volume);
-void backendGetInformationAboutStreams(GtkTextBuffer *textBuffer);
+void backendGetInformationAboutStreams(GtkTextBuffer* textBuffer);
 void backendGetDuration (gchar* str);
 void backendGetPosition (gchar* str);
 void backendGetColorBalance (gchar* channelName, gdouble* value);

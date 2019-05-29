@@ -122,8 +122,8 @@ static void fullscreen_cb        (GtkWidget* button,       gpointer data);
 static void fullscreenRealize_cb (GtkWidget* widget,       gpointer data);
 static void overlayFullscreen_cb (GtkWidget* widget, GtkWindow* mainWindow);
 static void fileMenu_cb (GtkWidget* widget);
-static void deleteEvent_cb (GtkWidget* widget, GdkEvent *event, gpointer data);
-static void fullSlider_cb (GtkRange *range, gpointer data);
+static void deleteEvent_cb (GtkWidget* widget, GdkEvent* event, gpointer data);
+static void fullSlider_cb (GtkRange* range, gpointer data);
 static void motionNotify_cb (GtkWidget* widget, gpointer data);
 static void aboutMenu_cb (GtkWidget* widget, gpointer data);
 static void informationMenu_cb (GtkWidget* widget, gpointer data);
@@ -398,8 +398,8 @@ int createHelpMenu (HelpMenu* helpMenu, GtkWidget* menubar) {
     return 0;
 }
 
-static void createContext (GtkWidget *widget) {
-    GdkWindow *window = gtk_widget_get_window (widget);
+static void createContext (GtkWidget* widget) {
+    GdkWindow* window = gtk_widget_get_window (widget);
     guintptr window_handle;
 
     if (!gdk_window_ensure_native (window)) {
@@ -556,7 +556,7 @@ void hideControls () {
     g_signal_handler_unblock (videoWindow, motionSignalId);
 }
 
-static void play_cb (GtkButton *button, gpointer data) {
+static void play_cb (GtkButton* button, gpointer data) {
     if (!backendIsPlaying()) {
         GtkWidget* icon = gtk_image_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
         gtk_button_set_image (button, icon);
@@ -568,16 +568,16 @@ static void play_cb (GtkButton *button, gpointer data) {
     }
 }
 
-static void stop_cb (GtkButton *button, gpointer data) {
+static void stop_cb (GtkButton* button, gpointer data) {
     backendStop();
 }
 
-static void slider_cb (GtkRange *range, gpointer data) {
+static void slider_cb (GtkRange* range, gpointer data) {
     gdouble value = gtk_range_get_value (GTK_RANGE (range));
     backendSeek (value);
 }
 
-static void fullSlider_cb (GtkRange *range, gpointer data) {
+static void fullSlider_cb (GtkRange* range, gpointer data) {
     gdouble value = gtk_range_get_value(GTK_RANGE (range));
     backendSeek(value);
 }
@@ -678,11 +678,11 @@ static void fullscreenRealize_cb (GtkWidget* widget, gpointer data) {
     createContext (widget);
 }
 
-static void fileMenu_cb (GtkWidget *widget) {
+static void fileMenu_cb (GtkWidget* widget) {
     if (!isPlaying) {
-        GtkFileChooserNative *fileChooser;
+        GtkFileChooserNative* fileChooser;
         GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
-        GtkWindow *window = GTK_WINDOW (gtk_widget_get_toplevel(widget));
+        GtkWindow* window = GTK_WINDOW (gtk_widget_get_toplevel(widget));
         int res;
 
         fileChooser = gtk_file_chooser_native_new ("Open File", window,
@@ -692,10 +692,10 @@ static void fileMenu_cb (GtkWidget *widget) {
         if (res == GTK_RESPONSE_ACCEPT) {
             isPlaying = TRUE;
 
-            char *filename;
-            GtkFileChooser *chooser = GTK_FILE_CHOOSER (fileChooser);
+            char* filename;
+            GtkFileChooser* chooser = GTK_FILE_CHOOSER (fileChooser);
             filename = gtk_file_chooser_get_filename (chooser);
-            const char *path = g_strconcat ("file://", filename, NULL);
+            const char* path = g_strconcat ("file://", filename, NULL);
 
             backendPlay (path);
             createContext (uiWidgets.videoWindow);
@@ -716,9 +716,9 @@ static void fileMenu_cb (GtkWidget *widget) {
         }
         g_object_unref (fileChooser);
     } else {
-        GtkFileChooserNative *fileChooser;
+        GtkFileChooserNative* fileChooser;
         GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_OPEN;
-        GtkWindow *window = GTK_WINDOW (gtk_widget_get_toplevel(widget));
+        GtkWindow* window = GTK_WINDOW (gtk_widget_get_toplevel(widget));
         int res;
 
         fileChooser = gtk_file_chooser_native_new ("Open File", window,
@@ -728,10 +728,10 @@ static void fileMenu_cb (GtkWidget *widget) {
         if (res == GTK_RESPONSE_ACCEPT) {
             isPlaying = TRUE;
 
-            char *filename;
-            GtkFileChooser *chooser = GTK_FILE_CHOOSER (fileChooser);
+            char* filename;
+            GtkFileChooser* chooser = GTK_FILE_CHOOSER (fileChooser);
             filename = gtk_file_chooser_get_filename (chooser);
-            const char *path = g_strconcat ("file://", filename, NULL);
+            const char* path = g_strconcat ("file://", filename, NULL);
 
             backendChangeUri (path);
             refreshDurationLabel (uiWidgets.duration);

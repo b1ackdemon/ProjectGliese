@@ -17,7 +17,7 @@ static CustomData data;
 
 static void eos_cb (GstBus* bus, GstMessage* msg, CustomData* data);
 static void error_cb (GstBus* bus, GstMessage* msg, CustomData* data);
-static void stateChanged_cb(GstBus *bus, GstMessage *msg, CustomData *data);
+static void stateChanged_cb(GstBus* bus, GstMessage* msg, CustomData* data);
 static void padAdded_cb (GstElement* dec, GstPad* pad, gpointer data);
 
 void backendInit (int* argc, char*** argv){
@@ -152,7 +152,7 @@ gdouble backendGetVolume() {
 
 void backendGetInformationAboutStreams(GtkTextBuffer *textBuffer) {
     gint i;
-    GstTagList *tags;
+    GstTagList* tags;
     gchar *str, *total_str;
     guint rate;
     gint n_video, n_audio, n_text;
@@ -281,8 +281,8 @@ static void eos_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
 
 /* This function is called when an error message is posted on the bus */
 static void error_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
-    GError *err;
-    gchar *debug_info;
+    GError* err;
+    gchar* debug_info;
 
     /* Print error details on the screen */
     gst_message_parse_error (msg, &err, &debug_info);
@@ -298,7 +298,7 @@ static void error_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
 
 /* This function is called when the pipeline changes states. We use it to
  * keep track of the current state. */
-static void stateChanged_cb(GstBus *bus, GstMessage *msg, CustomData *data) {
+static void stateChanged_cb(GstBus* bus, GstMessage* msg, CustomData* data) {
     GstState old_state, new_state, pending_state;
     gst_message_parse_state_changed (msg, &old_state, &new_state, &pending_state);
     if (GST_MESSAGE_SRC (msg) == GST_OBJECT (pipeline)) {
