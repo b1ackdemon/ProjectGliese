@@ -121,7 +121,9 @@ static void volume_cb            (GtkRange*  volumeButton, gpointer data);
 static void fullscreen_cb        (GtkWidget* button,       gpointer data);
 static void fullscreenRealize_cb (GtkWidget* widget,       gpointer data);
 static void overlayFullscreen_cb (GtkWidget* widget, GtkWindow* mainWindow);
-static void fileMenu_cb (GtkWidget* widget);
+static void fileMenu_cb  (GtkWidget* widget);
+static void closeMenu_cb (GtkWidget* widget);
+static void exitMenu_cb  (GtkWidget* widget);
 static void deleteEvent_cb (GtkWidget* widget, GdkEvent* event, gpointer data);
 static void fullSlider_cb (GtkRange* range, gpointer data);
 static void motionNotify_cb (GtkWidget* widget, gpointer data);
@@ -271,11 +273,13 @@ int createOpenMenu (OpenMenu* openMenu, GtkWidget* menubar) {
             gtk_menu_item_new_with_label ("Open");
     openMenu->fileMi   =
             gtk_menu_item_new_with_label ("File");
-    g_signal_connect (openMenu->fileMi, "activate", G_CALLBACK (fileMenu_cb), &uiWidgets);
+    g_signal_connect (openMenu->fileMi, "activate", G_CALLBACK (fileMenu_cb), NULL);
     openMenu->closeMi  =
             gtk_menu_item_new_with_label ("Close");
+    g_signal_connect (openMenu->closeMi, "activate", G_CALLBACK (closeMenu_cb), NULL);
     openMenu->exitMi   =
             gtk_menu_item_new_with_label ("Exit");
+    g_signal_connect (openMenu->exitMi, "activate", G_CALLBACK (exitMenu_cb), NULL);
 
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (openMenu->OpenMi),
             openMenu->openMenu);
@@ -678,6 +682,15 @@ static void fullscreenRealize_cb (GtkWidget* widget, gpointer data) {
     createContext (widget);
 }
 
+static void closeMenu_cb (GtkWidget* widget) {
+    backendStop();
+}
+
+static void exitMenu_cb (GtkWidget* widget) {
+    backendStop();
+    gtk_main_quit();
+}
+
 static void fileMenu_cb (GtkWidget* widget) {
     if (!isPlaying) {
         GtkFileChooserNative* fileChooser;
@@ -777,7 +790,7 @@ static void hue_cb (GtkRange* range, gpointer data) {
 }
 
 /* This function is called when the main window is closed */
-static void deleteEvent_cb (GtkWidget *widget, GdkEvent *event, gpointer data) {
-    stop_cb (NULL, NULL);
+static void deleteEvent_cb (GtkWidget* widget, GdkEvent* event, gpointer data) {
+    backendStop();
     gtk_main_quit();
 }
