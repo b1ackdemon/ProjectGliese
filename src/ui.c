@@ -135,6 +135,8 @@ static void brightness_cb (GtkRange* range, gpointer data);
 static void saturation_cb (GtkRange* range, gpointer data);
 static void hue_cb (GtkRange* range, gpointer data);
 
+void stringReplace (char* str, char rep, char with);
+
 int main (int argc, char **argv) {
     gtk_init (&argc, &argv);
     backendInit (&argc, &argv);
@@ -705,10 +707,15 @@ static void fileMenu_cb (GtkWidget* widget) {
         if (res == GTK_RESPONSE_ACCEPT) {
             isPlaying = TRUE;
 
-            char* filename;
+            char* fileName;
             GtkFileChooser* chooser = GTK_FILE_CHOOSER (fileChooser);
-            filename = gtk_file_chooser_get_filename (chooser);
-            const char* path = g_strconcat ("file://", filename, NULL);
+            fileName = gtk_file_chooser_get_filename (chooser);
+
+            #if defined (GDK_WINDOWING_WIN32)
+                stringReplace(fileName, '\\', '/');
+            #endif
+
+            const char* path = g_strconcat ("file://", fileName, NULL);
 
             backendPlay (path);
             createContext (uiWidgets.videoWindow);
@@ -725,7 +732,7 @@ static void fileMenu_cb (GtkWidget* widget) {
                                       G_CALLBACK (slider_cb), NULL);
             gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), backendGetVolume());
 
-            g_free (filename);
+            g_free (fileName);
         }
         g_object_unref (fileChooser);
     } else {
@@ -793,4 +800,15 @@ static void hue_cb (GtkRange* range, gpointer data) {
 static void deleteEvent_cb (GtkWidget* widget, GdkEvent* event, gpointer data) {
     backendStop();
     gtk_main_quit();
+}
+
+void stringReplace (char* str, char rep, char with) {
+    int length = (int) strlen(str);
+
+    for (int i = 0; i < length; i++) {
+        if (str[i] == rep)
+        {
+            str[i] = with;
+        }
+    }
 }
