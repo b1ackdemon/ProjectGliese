@@ -71,6 +71,7 @@ typedef struct _Menubar {
 } Menubar;
 
 typedef struct _UiWidgets {
+    GtkWidget* window;
     GtkWidget* videoWindow;
     GtkWidget* playButton;
     GtkWidget* stopButton;
@@ -136,6 +137,7 @@ static void saturation_cb (GtkRange* range, gpointer data);
 static void hue_cb (GtkRange* range, gpointer data);
 
 void stringReplace (char* str, char rep, char with);
+char* getFileName(char* str);
 
 int main (int argc, char **argv) {
     gtk_init (&argc, &argv);
@@ -157,14 +159,13 @@ int main (int argc, char **argv) {
     return 0;
 }
 int createWindow (const char* name, int width, int height) {
-    GtkWidget* window;
-    window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_position (GTK_WINDOW (window), GTK_WIN_POS_CENTER);
-    gtk_window_set_default_size (GTK_WINDOW (window), width, height);
-    gtk_window_set_title (GTK_WINDOW (window), name);
-    g_signal_connect (G_OBJECT (window), "delete-event", G_CALLBACK(deleteEvent_cb), NULL);
-    createUi (window);
-    gtk_widget_show_all (window);
+    uiWidgets.window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_position (GTK_WINDOW (uiWidgets.window), GTK_WIN_POS_CENTER);
+    gtk_window_set_default_size (GTK_WINDOW (uiWidgets.window), width, height);
+    gtk_window_set_title (GTK_WINDOW (uiWidgets.window), name);
+    g_signal_connect (G_OBJECT (uiWidgets.window), "delete-event", G_CALLBACK(deleteEvent_cb), NULL);
+    createUi (uiWidgets.window);
+    gtk_widget_show_all (uiWidgets.window);
     return 0;
 }
 
@@ -715,6 +716,9 @@ static void fileMenu_cb (GtkWidget* widget) {
                 stringReplace(fileName, '\\', '/');
             #endif
 
+             char* file = getFileName (fileName);
+             gtk_window_set_title (GTK_WINDOW (uiWidgets.window), file);
+
             const char* path = g_strconcat ("file://", fileName, NULL);
 
             backendPlay (path);
@@ -725,13 +729,14 @@ static void fileMenu_cb (GtkWidget* widget) {
 
             g_signal_connect (G_OBJECT (uiWidgets.playButton), "clicked", G_CALLBACK (play_cb), NULL);
             g_signal_connect (G_OBJECT (uiWidgets.stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
-            g_signal_connect (G_OBJECT(uiWidgets.fullscreenButton), "clicked", G_CALLBACK (fullscreen_cb), NULL);
-            g_signal_connect (G_OBJECT(uiWidgets.volumeButton), "value-changed", G_CALLBACK (volume_cb), NULL);
+            g_signal_connect (G_OBJECT (uiWidgets.fullscreenButton), "clicked", G_CALLBACK (fullscreen_cb), NULL);
+            g_signal_connect (G_OBJECT (uiWidgets.volumeButton), "value-changed", G_CALLBACK (volume_cb), NULL);
             uiWidgets.sliderUpdateSignalId =
                     g_signal_connect (G_OBJECT (uiWidgets.slider), "value-changed",
                                       G_CALLBACK (slider_cb), NULL);
             gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), backendGetVolume());
 
+            g_free (file);
             g_free (fileName);
         }
         g_object_unref (fileChooser);
@@ -748,17 +753,23 @@ static void fileMenu_cb (GtkWidget* widget) {
         if (res == GTK_RESPONSE_ACCEPT) {
             isPlaying = TRUE;
 
-            char* filename;
+            char* fileName;
             GtkFileChooser* chooser = GTK_FILE_CHOOSER (fileChooser);
-            filename = gtk_file_chooser_get_filename (chooser);
-            const char* path = g_strconcat ("file://", filename, NULL);
+            fileName = gtk_file_chooser_get_filename (chooser);
+
+            char* file = getFileName(fileName);
+            gtk_window_set_title (GTK_WINDOW (uiWidgets.window), file);
+
+            const char* path = g_strconcat ("file://", fileName, NULL);
 
             backendChangeUri (path);
             refreshDurationLabel (uiWidgets.duration);
 
             GtkWidget* icon = gtk_image_new_from_icon_name ("media-playback-pause", GTK_ICON_SIZE_BUTTON);
             gtk_button_set_image (GTK_BUTTON (uiWidgets.playButton), icon);
-            g_free (filename);
+
+            g_free (file);
+            g_free (fileName);
         }
         g_object_unref (fileChooser);
     }
@@ -811,4 +822,23 @@ void stringReplace (char* str, char rep, char with) {
             str[i] = with;
         }
     }
+}
+
+char* getFileName(char* str) {
+    int length = (int) strlen(str);
+
+    for (int i = length; i > 0; i--)
+    {
+        if (str[i] == '/')
+        {
+            int size = length - ++i;
+            char* fileName = (char*) malloc(sizeof(char) * size);
+
+            memcpy(fileName, str + i, size);
+            fileName[size] = '\0';
+
+            return fileName;
+        }
+    }
+    return NULL;
 }
