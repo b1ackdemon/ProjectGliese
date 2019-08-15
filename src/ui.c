@@ -163,7 +163,8 @@ int createWindow (const char* name, int width, int height) {
     gtk_window_set_position (GTK_WINDOW (uiWidgets.window), GTK_WIN_POS_CENTER);
     gtk_window_set_default_size (GTK_WINDOW (uiWidgets.window), width, height);
     gtk_window_set_title (GTK_WINDOW (uiWidgets.window), name);
-    g_signal_connect (G_OBJECT (uiWidgets.window), "delete-event", G_CALLBACK(deleteEvent_cb), NULL);
+    g_signal_connect (G_OBJECT (uiWidgets.window), "delete-event",
+            G_CALLBACK(deleteEvent_cb), NULL);
     createUi (uiWidgets.window);
     gtk_widget_show_all (uiWidgets.window);
     return 0;
@@ -176,12 +177,15 @@ int createUi (GtkWidget* window) {
     Menubar menubar;
 
     uiWidgets.videoWindow  = gtk_drawing_area_new();
-    uiWidgets.playButton   = gtk_button_new_from_icon_name ("media-playback-start", GTK_ICON_SIZE_BUTTON);
-    uiWidgets.stopButton   = gtk_button_new_from_icon_name ("media-playback-stop", GTK_ICON_SIZE_BUTTON);
+    uiWidgets.playButton   = gtk_button_new_from_icon_name ("media-playback-start",
+            GTK_ICON_SIZE_BUTTON);
+    uiWidgets.stopButton   = gtk_button_new_from_icon_name ("media-playback-stop",
+            GTK_ICON_SIZE_BUTTON);
     uiWidgets.volumeButton = gtk_volume_button_new();
     gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), 1.0);
 
-    uiWidgets.fullscreenButton = gtk_button_new_from_icon_name ("view-fullscreen", GTK_ICON_SIZE_BUTTON);
+    uiWidgets.fullscreenButton = gtk_button_new_from_icon_name ("view-fullscreen",
+            GTK_ICON_SIZE_BUTTON);
 
     uiWidgets.slider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
     gtk_scale_set_draw_value (GTK_SCALE (uiWidgets.slider), 0);
@@ -452,7 +456,8 @@ void createColorBalanceWindow() {
 
         GtkWidget* contrastLabel = gtk_label_new ("Contrast");
 
-        GtkWidget* contrastSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, -1000, 1000, 1);
+        GtkWidget* contrastSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL,
+                -1000, 1000, 1);
         g_signal_connect (G_OBJECT (contrastSlider), "value-changed",
                           G_CALLBACK (contrast_cb), NULL);
 
@@ -462,7 +467,8 @@ void createColorBalanceWindow() {
 
         GtkWidget* brightnessLabel = gtk_label_new ("Brightness");
 
-        GtkWidget* brightnessSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, -1000, 1000, 1);
+        GtkWidget* brightnessSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL,
+                -1000, 1000, 1);
         g_signal_connect (G_OBJECT (brightnessSlider), "value-changed",
                           G_CALLBACK (brightness_cb), NULL);
 
@@ -472,7 +478,8 @@ void createColorBalanceWindow() {
 
         GtkWidget* hueLabel = gtk_label_new ("Hue");
 
-        GtkWidget* hueSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, -1000, 1000, 1);
+        GtkWidget* hueSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL,
+                -1000, 1000, 1);
         g_signal_connect (G_OBJECT (hueSlider), "value-changed",
                           G_CALLBACK (hue_cb), NULL);
 
@@ -482,7 +489,8 @@ void createColorBalanceWindow() {
 
         GtkWidget* saturationLabel = gtk_label_new ("Saturation");
 
-        GtkWidget* saturationSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, -1000, 1000, 1);
+        GtkWidget* saturationSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL,
+                -1000, 1000, 1);
         g_signal_connect (G_OBJECT (saturationSlider), "value-changed",
                           G_CALLBACK (saturation_cb), NULL);
 
@@ -527,7 +535,8 @@ void createAboutDialog() {
     gtk_about_dialog_set_license (GTK_ABOUT_DIALOG (aboutWindow), "GPL-3.0");
     gtk_about_dialog_set_license_type (GTK_ABOUT_DIALOG (aboutWindow), GTK_LICENSE_GPL_3_0_ONLY);
 
-    gtk_about_dialog_set_website (GTK_ABOUT_DIALOG (aboutWindow), "https://github.com/b1ackdemon/projectGliese");
+    gtk_about_dialog_set_website (GTK_ABOUT_DIALOG (aboutWindow),
+            "https://github.com/b1ackdemon/projectGliese");
     gtk_about_dialog_set_website_label (GTK_ABOUT_DIALOG (aboutWindow), "Github");
 
     gtk_about_dialog_set_comments (GTK_ABOUT_DIALOG (aboutWindow), "A simple media player.");
@@ -606,30 +615,39 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
 
     videoWindow = gtk_drawing_area_new();
     gtk_container_add (GTK_CONTAINER (rootPane), videoWindow);
-    g_signal_connect (G_OBJECT (videoWindow), "realize", G_CALLBACK (fullscreenRealize_cb), NULL);
+    g_signal_connect (G_OBJECT (videoWindow), "realize",
+            G_CALLBACK (fullscreenRealize_cb), NULL);
     gtk_widget_add_events (videoWindow, GDK_POINTER_MOTION_MASK);
 
-    GtkWidget* playButton  = gtk_button_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT (playButton), "clicked", G_CALLBACK (play_cb), NULL);
+    GtkWidget* playButton  = gtk_button_new_from_icon_name("media-playback-pause",
+            GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT (playButton), "clicked",
+            G_CALLBACK (play_cb), NULL);
 
-    GtkWidget* stopButton   = gtk_button_new_from_icon_name("media-playback-stop", GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT (stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
+    GtkWidget* stopButton   = gtk_button_new_from_icon_name("media-playback-stop",
+            GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT (stopButton), "clicked",
+            G_CALLBACK (stop_cb), NULL);
 
     GtkWidget* volumeButton = gtk_volume_button_new();
-    g_signal_connect (G_OBJECT (volumeButton), "value-changed", G_CALLBACK (volume_cb), NULL);
+    g_signal_connect (G_OBJECT (volumeButton), "value-changed",
+            G_CALLBACK (volume_cb), NULL);
     gtk_scale_button_set_value (GTK_SCALE_BUTTON (volumeButton), backendGetVolume());
 
     fullUiWidgets.position = gtk_label_new ("0:00:00");
 
-    fullUiWidgets.fullscreenSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
+    fullUiWidgets.fullscreenSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL,
+            0, 100, 1);
     gtk_scale_set_draw_value (GTK_SCALE (fullUiWidgets.fullscreenSlider), 0);
     fullUiWidgets.fullScreenSliderId = g_signal_connect (G_OBJECT (fullUiWidgets.fullscreenSlider),
             "value-changed", G_CALLBACK (fullSlider_cb), NULL);
 
     fullUiWidgets.duration = gtk_label_new ("0:00:00");
 
-    GtkWidget* fullscreenButton = gtk_button_new_from_icon_name ("view-fullscreen", GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT (fullscreenButton), "clicked", G_CALLBACK (overlayFullscreen_cb), parentWindow);
+    GtkWidget* fullscreenButton = gtk_button_new_from_icon_name ("view-fullscreen",
+            GTK_ICON_SIZE_BUTTON);
+    g_signal_connect (G_OBJECT (fullscreenButton), "clicked",
+            G_CALLBACK (overlayFullscreen_cb), parentWindow);
 
     controls = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start (GTK_BOX (controls), playButton,                     FALSE, FALSE, 2);
@@ -724,17 +742,22 @@ static void fileMenu_cb (GtkWidget* widget) {
             backendPlay (path);
             createContext (uiWidgets.videoWindow);
 
-            GtkWidget* icon = gtk_image_new_from_icon_name ("media-playback-pause", GTK_ICON_SIZE_BUTTON);
+            GtkWidget* icon = gtk_image_new_from_icon_name ("media-playback-pause",
+                    GTK_ICON_SIZE_BUTTON);
             gtk_button_set_image (GTK_BUTTON (uiWidgets.playButton), icon);
 
-            g_signal_connect (G_OBJECT (uiWidgets.playButton), "clicked", G_CALLBACK (play_cb), NULL);
-            g_signal_connect (G_OBJECT (uiWidgets.stopButton), "clicked", G_CALLBACK (stop_cb), NULL);
-            g_signal_connect (G_OBJECT (uiWidgets.fullscreenButton), "clicked", G_CALLBACK (fullscreen_cb), NULL);
-            g_signal_connect (G_OBJECT (uiWidgets.volumeButton), "value-changed", G_CALLBACK (volume_cb), NULL);
+            g_signal_connect (G_OBJECT (uiWidgets.playButton), "clicked",
+                    G_CALLBACK (play_cb), NULL);
+            g_signal_connect (G_OBJECT (uiWidgets.stopButton), "clicked",
+                    G_CALLBACK (stop_cb), NULL);
+            g_signal_connect (G_OBJECT (uiWidgets.fullscreenButton), "clicked",
+                    G_CALLBACK (fullscreen_cb), NULL);
+            g_signal_connect (G_OBJECT (uiWidgets.volumeButton), "value-changed",
+                    G_CALLBACK (volume_cb), NULL);
             uiWidgets.sliderUpdateSignalId =
                     g_signal_connect (G_OBJECT (uiWidgets.slider), "value-changed",
                                       G_CALLBACK (slider_cb), NULL);
-            gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), backendGetVolume());
+            gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), 1.0);
 
             g_free (file);
             g_free (fileName);
@@ -765,7 +788,8 @@ static void fileMenu_cb (GtkWidget* widget) {
             backendChangeUri (path);
             refreshDurationLabel (uiWidgets.duration);
 
-            GtkWidget* icon = gtk_image_new_from_icon_name ("media-playback-pause", GTK_ICON_SIZE_BUTTON);
+            GtkWidget* icon = gtk_image_new_from_icon_name ("media-playback-pause",
+                    GTK_ICON_SIZE_BUTTON);
             gtk_button_set_image (GTK_BUTTON (uiWidgets.playButton), icon);
 
             g_free (file);
