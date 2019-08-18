@@ -13,7 +13,7 @@ typedef struct _CustomData {
 } CustomData;
 
 static GstElement* pipeline;
-static CustomData data;
+static CustomData customData;
 
 static void eos_cb (GstBus* bus, GstMessage* msg, CustomData* data);
 static void error_cb (GstBus* bus, GstMessage* msg, CustomData* data);
@@ -32,7 +32,7 @@ int backendSetWindow (guintptr window) {
 int backendPlay (const gchar* filename) {
     GstBus* bus;
 
-    data.duration = GST_CLOCK_TIME_NONE;
+    customData.duration = GST_CLOCK_TIME_NONE;
     pipeline = gst_element_factory_make ("playbin", "playbin");
     if (!pipeline) {
         g_printerr ("Not all elements could be created.\n");
@@ -47,13 +47,13 @@ int backendPlay (const gchar* filename) {
 
     bus = gst_element_get_bus (pipeline);
     gst_bus_add_signal_watch (bus);
-    g_signal_connect (bus, "message::error", (GCallback) error_cb, &data);
-    g_signal_connect (bus, "message::eos", (GCallback) eos_cb, &data);
-    g_signal_connect (bus, "message::state-changed", (GCallback) stateChanged_cb, &data);
+    g_signal_connect (bus, "message::error", (GCallback) error_cb, &customData);
+    g_signal_connect (bus, "message::eos", (GCallback) eos_cb, &customData);
+    g_signal_connect (bus, "message::state-changed", (GCallback) stateChanged_cb, &customData);
     gst_object_unref (bus);
 
-    data.ret = gst_element_set_state (pipeline, GST_STATE_PLAYING);
-    if (data.ret == GST_STATE_CHANGE_FAILURE) {
+    customData.ret = gst_element_set_state (pipeline, GST_STATE_PLAYING);
+    if (customData.ret == GST_STATE_CHANGE_FAILURE) {
         g_printerr ("Unable to set the pipeline to the playing state.\n");
         gst_object_unref (pipeline);
         return -1;
@@ -70,12 +70,12 @@ void backendChangeUri (const gchar* filename) {
 gdouble backendQueryDuration() {
     gboolean result;
 
-    result = gst_element_query_duration (pipeline, GST_FORMAT_TIME, &data.duration);
+    result = gst_element_query_duration (pipeline, GST_FORMAT_TIME, &customData.duration);
     if (!result) {
         g_printerr ("Could not query current duration.\n");
         return GST_CLOCK_TIME_NONE;
     }
-    return  (gdouble) data.duration / GST_SECOND;
+    return (gdouble) customData.duration / GST_SECOND;
 }
 
 gboolean backendQueryPosition (gdouble* current) {
@@ -84,7 +84,7 @@ gboolean backendQueryPosition (gdouble* current) {
     res = gst_element_query_position (pipeline, GST_FORMAT_TIME, &cur);
     *current = (gdouble) cur / GST_SECOND;
     g_print ("Position %" GST_TIME_FORMAT " / %" GST_TIME_FORMAT "\r\n",
-             GST_TIME_ARGS (cur), GST_TIME_ARGS (data.duration));
+             GST_TIME_ARGS (cur), GST_TIME_ARGS (customData.duration));
     return res;
 }
 
@@ -107,18 +107,18 @@ void backendGetPosition (gchar* str) {
 }
 
 gboolean backendDurationIsValid() {
-    return GST_CLOCK_TIME_IS_VALID (data.duration);
+    return GST_CLOCK_TIME_IS_VALID (customData.duration);
 }
 
 gboolean backendIsPausedOrPlaying() {
-    if (data.state < GST_STATE_PAUSED) {
+    if (customData.state < GST_STATE_PAUSED) {
         return FALSE;
     }
     return TRUE;
 }
 
 gboolean backendIsPlaying() {
-    return data.state == GST_STATE_PLAYING;
+    return customData.state == GST_STATE_PLAYING;
 }
 
 void backendStop() {
@@ -296,6 +296,7 @@ void backendDeInit() {
 static void eos_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
     UNUSED (bus);
     UNUSED (msg);
+    UNUSED (data);
 
     g_print ("End-Of-Stream reached.\n");
     gst_element_set_state (pipeline, GST_STATE_READY);
@@ -304,6 +305,7 @@ static void eos_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
 /* This function is called when an error message is posted on the bus */
 static void error_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
     UNUSED (bus);
+    UNUSED (data);
 
     GError* err;
     gchar* debug_info;
@@ -338,6 +340,7 @@ static void stateChanged_cb(GstBus* bus, GstMessage* msg, CustomData* data) {
 
 static void padAdded_cb (GstElement* dec, GstPad* pad, gpointer data) {
     UNUSED (dec);
+    UNUSED (data);
 
     GstCaps* caps;
     GstStructure* structure;
