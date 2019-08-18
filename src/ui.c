@@ -572,6 +572,8 @@ void hideControls () {
 }
 
 static void play_cb (GtkButton* button, gpointer data) {
+    UNUSED (data);
+
     if (!backendIsPlaying()) {
         GtkWidget* icon = gtk_image_new_from_icon_name("media-playback-pause", GTK_ICON_SIZE_BUTTON);
         gtk_button_set_image (button, icon);
@@ -584,25 +586,36 @@ static void play_cb (GtkButton* button, gpointer data) {
 }
 
 static void stop_cb (GtkButton* button, gpointer data) {
+    UNUSED (button);
+    UNUSED (data);
+
     backendStop();
 }
 
 static void slider_cb (GtkRange* range, gpointer data) {
+    UNUSED (data);
+
     gdouble value = gtk_range_get_value (GTK_RANGE (range));
     backendSeek (value);
 }
 
 static void fullSlider_cb (GtkRange* range, gpointer data) {
+    UNUSED (data);
+
     gdouble value = gtk_range_get_value(GTK_RANGE (range));
     backendSeek(value);
 }
 
 static void volume_cb (GtkRange* volumeButton, gpointer data) {
+    UNUSED (data);
+
     gdouble value = gtk_scale_button_get_value (GTK_SCALE_BUTTON (volumeButton));
     backendSetVolume (value);
 }
 
 static void fullscreen_cb (GtkWidget* button, gpointer data) {
+    UNUSED (data);
+
     GtkWidget* controls;
     GtkWindow* parentWindow = GTK_WINDOW (gtk_widget_get_toplevel(button));
 
@@ -677,6 +690,9 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
 }
 
 static void motionNotify_cb (GtkWidget* widget, gpointer data) {
+    UNUSED (widget);
+    UNUSED (data);
+
     GdkWindow* window = gtk_widget_get_parent_window(videoWindow);
     GdkDisplay* display = gdk_display_get_default();
     GdkCursor* defaultCursor = gdk_cursor_new_for_display (display, GDK_LEFT_PTR);
@@ -699,14 +715,20 @@ static void overlayFullscreen_cb (GtkWidget* widget, GtkWindow* mainWindow) {
 }
 
 static void fullscreenRealize_cb (GtkWidget* widget, gpointer data) {
+    UNUSED (data);
+
     createContext (widget);
 }
 
 static void closeMenu_cb (GtkWidget* widget) {
+    UNUSED (widget);
+
     backendStop();
 }
 
 static void exitMenu_cb (GtkWidget* widget) {
+    UNUSED (widget);
+
     backendStop();
     gtk_main_quit();
 }
@@ -799,39 +821,60 @@ static void fileMenu_cb (GtkWidget* widget) {
 }
 
 static void aboutMenu_cb (GtkWidget* widget, gpointer data) {
+    UNUSED (widget);
+    UNUSED (data);
+
     createAboutDialog();
 }
 
 static void informationMenu_cb (GtkWidget* widget, gpointer data) {
+    UNUSED (widget);
+    UNUSED (data);
+
     createInformationWindow();
 }
 
 static void colorBalanceMenu_cb (GtkWidget* widget, gpointer data) {
+    UNUSED (widget);
+    UNUSED (data);
+
     createColorBalanceWindow();
 }
 
 static void contrast_cb (GtkRange* range, gpointer data) {
+    UNUSED (data);
+
     gdouble value = gtk_range_get_value (GTK_RANGE (range));
     backendSetColorBalance ("CONTRAST", value);
 }
 
 static void brightness_cb (GtkRange* range, gpointer data) {
+    UNUSED (data);
+
     gdouble value = gtk_range_get_value (GTK_RANGE (range));
     backendSetColorBalance ("BRIGHTNESS", value);
 }
 
 static void saturation_cb (GtkRange* range, gpointer data) {
+    UNUSED (data);
+
     gdouble value = gtk_range_get_value (GTK_RANGE (range));
     backendSetColorBalance ("SATURATION", value);
 }
 
 static void hue_cb (GtkRange* range, gpointer data) {
+    UNUSED (data);
+
     gdouble value = gtk_range_get_value (GTK_RANGE (range));
     backendSetColorBalance ("HUE", value);
 }
 
 /* This function is called when the main window is closed */
 static void deleteEvent_cb (GtkWidget* widget, GdkEvent* event, gpointer data) {
+    UNUSED (widget);
+    UNUSED (event);
+    UNUSED (data);
+
     backendStop();
     gtk_main_quit();
 }

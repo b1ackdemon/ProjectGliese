@@ -165,7 +165,7 @@ gchar** backendGetTitleAudioStreams() {
 
 gint backendGetAmountOfAudioStreams() {
     gint n_audio;
-    g_object_get (pipeline, "n-audio", &n_audio);
+    g_object_get (pipeline, "n-audio", &n_audio, NULL);
     return n_audio;
 }
 
@@ -294,12 +294,17 @@ void backendDeInit() {
 }
 
 static void eos_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
+    UNUSED (bus);
+    UNUSED (msg);
+
     g_print ("End-Of-Stream reached.\n");
     gst_element_set_state (pipeline, GST_STATE_READY);
 }
 
 /* This function is called when an error message is posted on the bus */
 static void error_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
+    UNUSED (bus);
+
     GError* err;
     gchar* debug_info;
 
@@ -318,6 +323,8 @@ static void error_cb (GstBus* bus, GstMessage* msg, CustomData* data) {
 /* This function is called when the pipeline changes states. We use it to
  * keep track of the current state. */
 static void stateChanged_cb(GstBus* bus, GstMessage* msg, CustomData* data) {
+    UNUSED (bus);
+
     GstState old_state, new_state, pending_state;
     gst_message_parse_state_changed (msg, &old_state, &new_state, &pending_state);
     if (GST_MESSAGE_SRC (msg) == GST_OBJECT (pipeline)) {
@@ -330,6 +337,8 @@ static void stateChanged_cb(GstBus* bus, GstMessage* msg, CustomData* data) {
 }
 
 static void padAdded_cb (GstElement* dec, GstPad* pad, gpointer data) {
+    UNUSED (dec);
+
     GstCaps* caps;
     GstStructure* structure;
     const gchar* name;
