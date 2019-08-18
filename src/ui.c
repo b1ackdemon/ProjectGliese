@@ -164,7 +164,7 @@ int createWindow (const char* name, int width, int height) {
     gtk_window_set_position (GTK_WINDOW (uiWidgets.window), GTK_WIN_POS_CENTER);
     gtk_window_set_default_size (GTK_WINDOW (uiWidgets.window), width, height);
     gtk_window_set_title (GTK_WINDOW (uiWidgets.window), name);
-    g_signal_connect (G_OBJECT (uiWidgets.window), "delete-event",
+    g_signal_connect (uiWidgets.window, "delete-event",
             G_CALLBACK(deleteEvent_cb), NULL);
     createUi (uiWidgets.window);
     gtk_widget_show_all (uiWidgets.window);
@@ -457,7 +457,7 @@ void createColorBalanceWindow() {
 
         GtkWidget* contrastSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL,
                 -1000, 1000, 1);
-        g_signal_connect (G_OBJECT (contrastSlider), "value-changed",
+        g_signal_connect (contrastSlider, "value-changed",
                           G_CALLBACK (contrast_cb), NULL);
 
         gdouble contrastValue;
@@ -468,7 +468,7 @@ void createColorBalanceWindow() {
 
         GtkWidget* brightnessSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL,
                 -1000, 1000, 1);
-        g_signal_connect (G_OBJECT (brightnessSlider), "value-changed",
+        g_signal_connect (brightnessSlider, "value-changed",
                           G_CALLBACK (brightness_cb), NULL);
 
         gdouble brightnessValue;
@@ -479,7 +479,7 @@ void createColorBalanceWindow() {
 
         GtkWidget* hueSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL,
                 -1000, 1000, 1);
-        g_signal_connect (G_OBJECT (hueSlider), "value-changed",
+        g_signal_connect (hueSlider, "value-changed",
                           G_CALLBACK (hue_cb), NULL);
 
         gdouble hueValue;
@@ -490,7 +490,7 @@ void createColorBalanceWindow() {
 
         GtkWidget* saturationSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL,
                 -1000, 1000, 1);
-        g_signal_connect (G_OBJECT (saturationSlider), "value-changed",
+        g_signal_connect (saturationSlider, "value-changed",
                           G_CALLBACK (saturation_cb), NULL);
 
         gdouble saturationValue;
@@ -614,22 +614,22 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
 
     videoWindow = gtk_drawing_area_new();
     gtk_container_add (GTK_CONTAINER (rootPane), videoWindow);
-    g_signal_connect (G_OBJECT (videoWindow), "realize",
+    g_signal_connect (videoWindow, "realize",
             G_CALLBACK (fullscreenRealize_cb), NULL);
     gtk_widget_add_events (videoWindow, GDK_POINTER_MOTION_MASK);
 
     GtkWidget* playButton  = gtk_button_new_from_icon_name("media-playback-pause",
             GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT (playButton), "clicked",
+    g_signal_connect (playButton, "clicked",
             G_CALLBACK (play_cb), NULL);
 
     GtkWidget* stopButton   = gtk_button_new_from_icon_name("media-playback-stop",
             GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT (stopButton), "clicked",
+    g_signal_connect (stopButton, "clicked",
             G_CALLBACK (stop_cb), NULL);
 
     GtkWidget* volumeButton = gtk_volume_button_new();
-    g_signal_connect (G_OBJECT (volumeButton), "value-changed",
+    g_signal_connect (volumeButton, "value-changed",
             G_CALLBACK (volume_cb), NULL);
     gtk_scale_button_set_value (GTK_SCALE_BUTTON (volumeButton), backendGetVolume());
 
@@ -638,14 +638,14 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
     fullUiWidgets.fullscreenSlider = gtk_scale_new_with_range (GTK_ORIENTATION_HORIZONTAL,
             0, 100, 1);
     gtk_scale_set_draw_value (GTK_SCALE (fullUiWidgets.fullscreenSlider), 0);
-    fullUiWidgets.fullScreenSliderId = g_signal_connect (G_OBJECT (fullUiWidgets.fullscreenSlider),
+    fullUiWidgets.fullScreenSliderId = g_signal_connect (fullUiWidgets.fullscreenSlider,
             "value-changed", G_CALLBACK (fullSlider_cb), NULL);
 
     fullUiWidgets.duration = gtk_label_new ("0:00:00");
 
     GtkWidget* fullscreenButton = gtk_button_new_from_icon_name ("view-fullscreen",
             GTK_ICON_SIZE_BUTTON);
-    g_signal_connect (G_OBJECT (fullscreenButton), "clicked",
+    g_signal_connect (fullscreenButton, "clicked",
             G_CALLBACK (overlayFullscreen_cb), parentWindow);
 
     controls = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
@@ -670,7 +670,7 @@ static void fullscreen_cb (GtkWidget* button, gpointer data) {
     gtk_widget_show_all (fullscreenWindow);
 
     gtk_window_fullscreen (GTK_WINDOW (fullscreenWindow));
-    motionSignalId = g_signal_connect (G_OBJECT (videoWindow), "motion-notify-event",
+    motionSignalId = g_signal_connect (videoWindow, "motion-notify-event",
             G_CALLBACK(motionNotify_cb), NULL);
 
     gtk_widget_hide (GTK_WIDGET (parentWindow));
@@ -745,16 +745,16 @@ static void fileMenu_cb (GtkWidget* widget) {
                     GTK_ICON_SIZE_BUTTON);
             gtk_button_set_image (GTK_BUTTON (uiWidgets.playButton), icon);
 
-            g_signal_connect (G_OBJECT (uiWidgets.playButton), "clicked",
+            g_signal_connect (uiWidgets.playButton, "clicked",
                     G_CALLBACK (play_cb), NULL);
-            g_signal_connect (G_OBJECT (uiWidgets.stopButton), "clicked",
+            g_signal_connect (uiWidgets.stopButton, "clicked",
                     G_CALLBACK (stop_cb), NULL);
-            g_signal_connect (G_OBJECT (uiWidgets.fullscreenButton), "clicked",
+            g_signal_connect (uiWidgets.fullscreenButton, "clicked",
                     G_CALLBACK (fullscreen_cb), NULL);
-            g_signal_connect (G_OBJECT (uiWidgets.volumeButton), "value-changed",
+            g_signal_connect (uiWidgets.volumeButton, "value-changed",
                     G_CALLBACK (volume_cb), NULL);
             uiWidgets.sliderUpdateSignalId =
-                    g_signal_connect (G_OBJECT (uiWidgets.slider), "value-changed",
+                    g_signal_connect (uiWidgets.slider, "value-changed",
                                       G_CALLBACK (slider_cb), NULL);
             gtk_scale_button_set_value (GTK_SCALE_BUTTON (uiWidgets.volumeButton), 1.0);
 

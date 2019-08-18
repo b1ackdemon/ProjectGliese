@@ -42,14 +42,14 @@ int backendPlay (const gchar* filename) {
     g_object_set (pipeline, "uri", filename, NULL);
     g_signal_connect (pipeline, "pad-added", G_CALLBACK (padAdded_cb), NULL);
 
-    gst_util_set_object_arg (G_OBJECT (pipeline), "flags",
+    gst_util_set_object_arg ((GObject *) pipeline, "flags",
             "soft-colorbalance+soft-volume+vis+text+audio+video");
 
     bus = gst_element_get_bus (pipeline);
     gst_bus_add_signal_watch (bus);
-    g_signal_connect (G_OBJECT (bus), "message::error", (GCallback) error_cb, &data);
-    g_signal_connect (G_OBJECT (bus), "message::eos", (GCallback) eos_cb, &data);
-    g_signal_connect (G_OBJECT (bus), "message::state-changed", (GCallback) stateChanged_cb, &data);
+    g_signal_connect (bus, "message::error", (GCallback) error_cb, &data);
+    g_signal_connect (bus, "message::eos", (GCallback) eos_cb, &data);
+    g_signal_connect (bus, "message::state-changed", (GCallback) stateChanged_cb, &data);
     gst_object_unref (bus);
 
     data.ret = gst_element_set_state (pipeline, GST_STATE_PLAYING);
