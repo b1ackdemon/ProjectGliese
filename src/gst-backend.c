@@ -150,6 +150,25 @@ gdouble backendGetVolume() {
     return value;
 }
 
+gchar** backendGetTitleAudioStreams() {
+    GstTagList* tags = NULL;
+    gint n_audio;
+    g_object_get (pipeline, "n-audio", &n_audio, NULL);
+    gchar** audioTitlesArray = (gchar**) g_malloc(sizeof(gchar) * n_audio);
+
+    for (int i = 0; i < n_audio; i++) {
+        g_signal_emit_by_name (pipeline, "get-audio-tags", i, &tags);
+        gst_tag_list_get_string (tags, GST_TAG_TITLE, &audioTitlesArray[i]);
+    }
+    return audioTitlesArray;
+}
+
+gint backendGetAmountOfAudioStreams() {
+    gint n_audio;
+    g_object_get (pipeline, "n-audio", &n_audio);
+    return n_audio;
+}
+
 void backendGetInformationAboutStreams(GtkTextBuffer *textBuffer) {
     gint i;
     GstTagList* tags;

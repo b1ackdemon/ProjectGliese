@@ -91,6 +91,7 @@ typedef struct _FullUiWidgets {
 } FullUiWidgets;
 
 static UiWidgets uiWidgets;
+static Menubar menubar;
 static FullUiWidgets fullUiWidgets;
 static gboolean isPlaying = FALSE;
 static GtkWidget* revealer = NULL;
@@ -173,8 +174,6 @@ int createWindow (const char* name, int width, int height) {
 int createUi (GtkWidget* window) {
     GtkWidget* controls;
     GtkWidget* mainBox;
-
-    Menubar menubar;
 
     uiWidgets.videoWindow  = gtk_drawing_area_new();
     uiWidgets.playButton   = gtk_button_new_from_icon_name ("media-playback-start",
@@ -261,19 +260,19 @@ gboolean refreshUi() {
     return TRUE;
 }
 
-int createMenubar (Menubar* menubar) {
-    menubar->menubar = gtk_menu_bar_new();
-    createOpenMenu      (&menubar->openMenu,      menubar->menubar);
-    createVideoMenu     (&menubar->videoMenu,     menubar->menubar);
-    createAudioMenu     (&menubar->audioMenu,     menubar->menubar);
-    createSubtitlesMenu (&menubar->subtitlesMenu, menubar->menubar);
-    createViewMenu      (&menubar->viewMenu,      menubar->menubar);
-    createOptionsMenu   (&menubar->optionsMenu,   menubar->menubar);
-    createHelpMenu      (&menubar->helpMenu,      menubar->menubar);
+int createMenubar (Menubar* bar) {
+    bar->menubar = gtk_menu_bar_new();
+    createOpenMenu      (&bar->openMenu,      bar->menubar);
+    createVideoMenu     (&bar->videoMenu,     bar->menubar);
+    createAudioMenu     (&bar->audioMenu,     bar->menubar);
+    createSubtitlesMenu (&bar->subtitlesMenu, bar->menubar);
+    createViewMenu      (&bar->viewMenu,      bar->menubar);
+    createOptionsMenu   (&bar->optionsMenu,   bar->menubar);
+    createHelpMenu      (&bar->helpMenu,      bar->menubar);
     return 0;
 }
 
-int createOpenMenu (OpenMenu* openMenu, GtkWidget* menubar) {
+int createOpenMenu (OpenMenu* openMenu, GtkWidget* bar) {
     openMenu->openMenu = gtk_menu_new();
 
     openMenu->OpenMi   =
@@ -295,11 +294,11 @@ int createOpenMenu (OpenMenu* openMenu, GtkWidget* menubar) {
     gtk_menu_shell_append (GTK_MENU_SHELL (openMenu->openMenu),
             openMenu->closeMi);
     gtk_menu_shell_append (GTK_MENU_SHELL (openMenu->openMenu), openMenu->exitMi);
-    gtk_menu_shell_append (GTK_MENU_SHELL (menubar), openMenu->OpenMi);
+    gtk_menu_shell_append (GTK_MENU_SHELL (bar), openMenu->OpenMi);
     return 0;
 }
 
-int createVideoMenu (VideoMenu* videoMenu, GtkWidget* menubar) {
+int createVideoMenu (VideoMenu* videoMenu, GtkWidget* bar) {
     videoMenu->videoMenu      = gtk_menu_new();
 
     videoMenu->videoMi        =
@@ -318,11 +317,11 @@ int createVideoMenu (VideoMenu* videoMenu, GtkWidget* menubar) {
             videoMenu->trackMi);
     gtk_menu_shell_append (GTK_MENU_SHELL (videoMenu->videoMenu),
                            videoMenu->colorBalanceMi);
-    gtk_menu_shell_append (GTK_MENU_SHELL (menubar), videoMenu->videoMi);
+    gtk_menu_shell_append (GTK_MENU_SHELL (bar), videoMenu->videoMi);
     return 0;
 }
 
-int createAudioMenu (AudioMenu* audioMenu, GtkWidget* menubar) {
+int createAudioMenu (AudioMenu* audioMenu, GtkWidget* bar) {
     audioMenu->audioMenu = gtk_menu_new();
 
     audioMenu->audioMi   =
@@ -334,12 +333,12 @@ int createAudioMenu (AudioMenu* audioMenu, GtkWidget* menubar) {
             audioMenu->audioMenu);
     gtk_menu_shell_append (GTK_MENU_SHELL (audioMenu->audioMenu),
             audioMenu->trackMi);
-    gtk_menu_shell_append (GTK_MENU_SHELL(menubar),
+    gtk_menu_shell_append (GTK_MENU_SHELL(bar),
             audioMenu->audioMi);
     return 0;
 }
 
-int createSubtitlesMenu (SubtitlesMenu* subtitlesMenu, GtkWidget* menubar) {
+int createSubtitlesMenu (SubtitlesMenu* subtitlesMenu, GtkWidget* bar) {
     subtitlesMenu->subtitlesMenu    = gtk_menu_new();
 
     subtitlesMenu->subtitlesMi      =
@@ -355,12 +354,12 @@ int createSubtitlesMenu (SubtitlesMenu* subtitlesMenu, GtkWidget* menubar) {
             subtitlesMenu->primaryTrackMi);
     gtk_menu_shell_append (GTK_MENU_SHELL (subtitlesMenu->subtitlesMenu),
             subtitlesMenu->secondaryTrackMi);
-    gtk_menu_shell_append (GTK_MENU_SHELL(menubar),
+    gtk_menu_shell_append (GTK_MENU_SHELL(bar),
             subtitlesMenu->subtitlesMi);
     return 0;
 }
 
-int createViewMenu (ViewMenu* viewMenu, GtkWidget* menubar) {
+int createViewMenu (ViewMenu* viewMenu, GtkWidget* bar) {
     viewMenu->viewMenu = gtk_menu_new();
 
     viewMenu->viewMi   = gtk_menu_item_new_with_label ("View");
@@ -373,11 +372,11 @@ int createViewMenu (ViewMenu* viewMenu, GtkWidget* menubar) {
             viewMenu->viewMenu);
     gtk_menu_shell_append (GTK_MENU_SHELL (viewMenu->viewMenu),
             viewMenu->informationMi);
-    gtk_menu_shell_append (GTK_MENU_SHELL (menubar), viewMenu->viewMi);
+    gtk_menu_shell_append (GTK_MENU_SHELL (bar), viewMenu->viewMi);
     return 0;
 }
 
-int createOptionsMenu (OptionsMenu* optionsMenu, GtkWidget* menubar) {
+int createOptionsMenu (OptionsMenu* optionsMenu, GtkWidget* bar) {
     optionsMenu->optionsMenu   = gtk_menu_new();
 
     optionsMenu->optionsMi     =
@@ -389,12 +388,12 @@ int createOptionsMenu (OptionsMenu* optionsMenu, GtkWidget* menubar) {
             optionsMenu->optionsMenu);
     gtk_menu_shell_append (GTK_MENU_SHELL (optionsMenu->optionsMenu),
             optionsMenu->preferencesMi);
-    gtk_menu_shell_append (GTK_MENU_SHELL (menubar),
+    gtk_menu_shell_append (GTK_MENU_SHELL (bar),
             optionsMenu->optionsMi);
     return 0;
 }
 
-int createHelpMenu (HelpMenu* helpMenu, GtkWidget* menubar) {
+int createHelpMenu (HelpMenu* helpMenu, GtkWidget* bar) {
     helpMenu->helpMenu = gtk_menu_new();
 
     helpMenu->helpMi  = gtk_menu_item_new_with_label("Help");
@@ -405,7 +404,7 @@ int createHelpMenu (HelpMenu* helpMenu, GtkWidget* menubar) {
             helpMenu->helpMenu);
     gtk_menu_shell_append (GTK_MENU_SHELL (helpMenu->helpMenu),
             helpMenu->aboutMi);
-    gtk_menu_shell_append (GTK_MENU_SHELL(menubar), helpMenu->helpMi);
+    gtk_menu_shell_append (GTK_MENU_SHELL(bar), helpMenu->helpMi);
     return 0;
 }
 
