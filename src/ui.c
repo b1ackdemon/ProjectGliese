@@ -30,6 +30,7 @@ typedef struct _VideoMenu {
 
 typedef struct _AudioMenu {
     GtkWidget* audioMenu;
+    GtkWidget* trackMenu;
     GtkWidget* audioMi;
     GtkWidget* trackMi;
 } AudioMenu;
@@ -114,7 +115,7 @@ void createInformationWindow();
 void createColorBalanceWindow();
 void refreshPositionLabel (GtkWidget* positionLabel);
 void refreshDurationLabel (GtkWidget* durationLabel);
-void hideControls ();
+void hideControls();
 
 static void play_cb              (GtkButton* button,       gpointer data);
 static void stop_cb              (GtkButton* button,       gpointer data);
@@ -329,12 +330,21 @@ int createAudioMenu (AudioMenu* audioMenu, GtkWidget* bar) {
     audioMenu->trackMi   =
             gtk_menu_item_new_with_label ("Track");
 
+    audioMenu->trackMenu = gtk_menu_new();
+    gtk_menu_item_set_submenu (GTK_MENU_ITEM (audioMenu->trackMi), audioMenu->trackMenu);
+
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (audioMenu->audioMi),
             audioMenu->audioMenu);
     gtk_menu_shell_append (GTK_MENU_SHELL (audioMenu->audioMenu),
             audioMenu->trackMi);
     gtk_menu_shell_append (GTK_MENU_SHELL(bar),
             audioMenu->audioMi);
+
+    GtkWidget* track1 = gtk_menu_item_new_with_label("Track 1");
+    GtkWidget* track2 = gtk_menu_item_new_with_label("Track 2");
+
+    gtk_menu_shell_append (GTK_MENU_SHELL (menubar.audioMenu.trackMenu), track1);
+    gtk_menu_shell_append (GTK_MENU_SHELL (menubar.audioMenu.trackMenu), track2);
     return 0;
 }
 
